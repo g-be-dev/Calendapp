@@ -13,7 +13,7 @@ jobs:
       - name: Bump version in index.html
         run: |
           # Lit la version actuelle depuis index.html
-          CURRENT=$(grep -oP 'v0\.\K[0-9]+' docs/index.html | head -1)
+          CURRENT=$(grep -oP 'v0\.\K[0-9]+' index.html | head -1)
           # Si pas trouvée, démarre à 3
           CURRENT=${CURRENT:-3}
           # Incrémente
