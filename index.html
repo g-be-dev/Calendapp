@@ -3,61 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#4285f4" />
+  <meta name="theme-color" content="#47a88d" />
   <title>Calendapp</title>
-
-  <!-- Manifest PWA -->
   <link rel="manifest" href="manifest.json" />
 
-  <!-- FullCalendar : bibliothèque d'affichage du calendrier -->
+  <!-- FullCalendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-
-  <!-- Plugin récurrence FullCalendar (génère les occurrences visuellement) -->
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/rrule@6.1.11/index.global.min.js"></script>
-  <!-- Bibliothèque RRule : calcul des règles de récurrence (RFC 5545) -->
   <script src="https://cdn.jsdelivr.net/npm/rrule@2.7.2/dist/es5/rrule.min.js"></script>
 
-  <!-- Google Identity Services : connexion OAuth -->
+  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     /* =====================
-       VARIABLES CSS : MODE CLAIR ET MODE SOMBRE
-       Toutes les couleurs de l'app passent par ces variables
-       pour permettre le basculement instantané de thème
+       POLICE
+       SF Pro sur Apple, puis fallback système proche
     ===================== */
-    :root {
-      --bg: #f4f6fb;
-      --surface: #ffffff;
-      --text: #222222;
-      --text-secondary: #555555;
-      --border: #e0e0e0;
-      --primary: #4285f4;
-      --primary-dark: #3367d6;
-      --primary-light: #e8f0fe;
-      --danger: #e53935;
-      --shadow: rgba(0,0,0,0.15);
-      --overlay-bg: rgba(0,0,0,0.4);
-      --input-bg: #ffffff;
-      --chip-bg: #f1f3f4;
+    body {
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue',
+                   'Segoe UI', system-ui, sans-serif;
     }
 
-    /* Variables redéfinies en mode sombre */
+    /* =====================
+       VARIABLES CSS
+       Mode clair : palette personnalisée
+       Mode sombre : palette sombre conservée
+    ===================== */
+    :root {
+      --bg: #f0f8f5;
+      --surface: #ffffff;
+      --text: #043d6e;
+      --text-secondary: #2a6a8a;
+      --border: #c8ece2;
+      --primary: #47a88d;
+      --primary-dark: #2e8a71;
+      --primary-light: #c8ece2;
+      --danger: #e53935;
+      --shadow: rgba(4,61,110,0.12);
+      --overlay-bg: rgba(4,61,110,0.35);
+      --input-bg: #ffffff;
+      --chip-bg: #c8ece2;
+      --topbar-text: #ffffff;
+    }
+
     [data-theme="dark"] {
       --bg: #121212;
       --surface: #1e1e1e;
       --text: #f0f0f0;
       --text-secondary: #aaaaaa;
       --border: #333333;
-      --primary: #5b9cf6;
-      --primary-dark: #4285f4;
-      --primary-light: #1a2a4a;
+      --primary: #5bc4a8;
+      --primary-dark: #47a88d;
+      --primary-light: #1a3a30;
       --danger: #ef5350;
       --shadow: rgba(0,0,0,0.5);
       --overlay-bg: rgba(0,0,0,0.65);
       --input-bg: #2a2a2a;
       --chip-bg: #2a2a2a;
+      --topbar-text: #f0f0f0;
     }
 
     /* =====================
@@ -66,7 +71,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
       background: var(--bg);
       color: var(--text);
       transition: background 0.3s, color 0.3s;
@@ -80,12 +84,17 @@
       align-items: center;
       justify-content: space-between;
       background: var(--primary);
-      color: white;
+      color: var(--topbar-text);
       padding: 10px 16px;
       gap: 10px;
     }
 
-    #topbar h1 { font-size: 1.1rem; font-weight: 600; white-space: nowrap; }
+    #topbar h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: -0.3px;
+    }
 
     #topbar-right {
       display: flex;
@@ -157,7 +166,7 @@
       border: none;
       border-radius: 6px;
       padding: 5px 12px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       font-size: 0.85rem;
       white-space: nowrap;
@@ -179,13 +188,14 @@
     }
 
     #view-selector button {
-      border: 1px solid var(--primary);
+      border: 1.5px solid var(--primary);
       background: transparent;
       color: var(--primary);
       border-radius: 20px;
       padding: 5px 16px;
       cursor: pointer;
       font-size: 0.85rem;
+      font-family: inherit;
       transition: all 0.2s;
     }
 
@@ -195,7 +205,7 @@
     }
 
     /* =====================
-       CONTENEUR DU CALENDRIER
+       CALENDRIER
     ===================== */
     #calendar-container {
       padding: 12px;
@@ -203,9 +213,8 @@
       margin: 0 auto;
     }
 
-    /* Adaptation FullCalendar aux variables de thème */
     .fc { color: var(--text); }
-    .fc-toolbar-title { color: var(--text); }
+    .fc-toolbar-title { color: var(--text); font-weight: 700; }
     .fc-button { background: var(--primary) !important; border-color: var(--primary) !important; }
     .fc-daygrid-day { background: var(--surface); }
     .fc-col-header-cell { background: var(--surface); color: var(--text); }
@@ -229,6 +238,7 @@
       cursor: pointer;
       box-shadow: 0 4px 12px var(--shadow);
       z-index: 100;
+      transition: background 0.2s;
     }
 
     #btn-add-event:hover { background: var(--primary-dark); }
@@ -253,7 +263,7 @@
     ===================== */
     .modal {
       background: var(--surface);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 24px;
       width: 90%;
       max-width: 480px;
@@ -266,6 +276,7 @@
     .modal h2 {
       margin-bottom: 16px;
       font-size: 1.1rem;
+      font-weight: 700;
       color: var(--primary);
     }
 
@@ -276,24 +287,156 @@
 
     .form-group label {
       display: block;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 600;
       color: var(--text-secondary);
-      margin-bottom: 4px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
     }
 
-    .form-group input,
+    .form-group input[type="text"],
     .form-group textarea,
     .form-group select {
       width: 100%;
       padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
       font-size: 0.95rem;
+      font-family: inherit;
       background: var(--input-bg);
       color: var(--text);
+      transition: border-color 0.2s;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--primary);
     }
 
     .form-group textarea { resize: vertical; min-height: 70px; }
+
+    /* =====================
+       TOGGLE TYPE D'ÉVÉNEMENT
+       Journée entière / Créneau horaire
+    ===================== */
+    .type-toggle {
+      display: flex;
+      border: 1.5px solid var(--primary);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .type-toggle button {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      font-size: 0.9rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    /* Séparateur entre les deux boutons du toggle */
+    .type-toggle button:first-child {
+      border-right: 1.5px solid var(--primary);
+    }
+
+    .type-toggle button.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* =====================
+       CHAMPS DATETIME CUSTOM
+       Ordre : HH:MM puis JJ/MM/AAAA
+    ===================== */
+    .datetime-custom {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* Conteneur heure + minutes avec scroll infini */
+    .time-spinners {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 8px;
+    }
+
+    /* Chaque spinner (heure ou minute) :
+       scroll up = +1, scroll down = -1, boucle infinie */
+    .spinner {
+      width: 32px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      background: transparent;
+      border: none;
+      cursor: ns-resize;
+      user-select: none;
+      padding: 2px 0;
+    }
+
+    .spinner:focus { outline: none; }
+
+    .time-separator {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    /* Selects natifs pour jour, mois, année */
+    .date-selects {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .date-selects select {
+      padding: 6px 4px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .date-selects select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* Champs de date simple (sans heure) pour journée entière */
+    .date-only-selects {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .date-only-selects select {
+      padding: 6px 4px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
 
     /* =====================
        BOUTONS
@@ -317,34 +460,37 @@
       background: var(--chip-bg);
       color: var(--text);
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 8px 16px;
       cursor: pointer;
       font-size: 0.9rem;
+      font-family: inherit;
     }
 
     .btn-save {
       background: var(--primary);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 8px 16px;
       cursor: pointer;
       font-size: 0.9rem;
+      font-family: inherit;
+      font-weight: 600;
     }
 
     .btn-save:hover { background: var(--primary-dark); }
 
-    /* Bouton supprimer : rouge contrasté */
     .btn-delete {
       background: var(--danger);
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 8px 16px;
       cursor: pointer;
       font-size: 0.9rem;
-      font-weight: 600;
+      font-family: inherit;
+      font-weight: 700;
     }
 
     .btn-delete:hover { background: #c62828; }
@@ -362,9 +508,10 @@
     .tag-chip {
       display: inline-flex;
       align-items: center;
-      padding: 4px 10px;
+      padding: 4px 12px;
       border-radius: 20px;
       font-size: 0.82rem;
+      font-weight: 600;
       cursor: pointer;
       border: 2px solid transparent;
       color: white;
@@ -380,6 +527,8 @@
       padding: 4px 12px;
       cursor: pointer;
       font-size: 0.85rem;
+      font-family: inherit;
+      font-weight: 600;
     }
 
     /* =====================
@@ -398,8 +547,10 @@
       border-radius: 50%;
       cursor: pointer;
       border: 3px solid transparent;
+      transition: transform 0.15s;
     }
 
+    .color-dot:hover { transform: scale(1.15); }
     .color-dot.selected { border-color: var(--text) !important; }
 
     /* =====================
@@ -421,19 +572,22 @@
     .reminder-row input[type="number"] {
       width: 70px;
       padding: 6px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
       background: var(--input-bg);
       color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
     }
 
     .reminder-row select {
       flex: 1;
       padding: 6px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
       background: var(--input-bg);
       color: var(--text);
+      font-family: inherit;
     }
 
     .btn-remove-reminder {
@@ -446,12 +600,13 @@
 
     #btn-add-reminder {
       background: none;
-      border: 1px dashed var(--border);
-      border-radius: 6px;
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
       padding: 5px 10px;
       color: var(--text-secondary);
       cursor: pointer;
       font-size: 0.85rem;
+      font-family: inherit;
       margin-top: 4px;
       width: fit-content;
     }
@@ -476,6 +631,7 @@
       #topbar h1 { font-size: 0.95rem; }
       .modal { padding: 16px; }
       #theme-auto-label span { display: none; }
+      .datetime-custom { gap: 4px; }
     }
   </style>
 </head>
@@ -483,10 +639,8 @@
 
   <!-- BARRE DU HAUT -->
   <div id="topbar">
-    <h1>📅 Calendapp</h1>
+<h1>📅 Calendapp <span style="font-size:0.7rem; opacity:0.75; font-weight:400;">v0.03</span></h1>
     <div id="topbar-right">
-
-      <!-- Contrôles de thème -->
       <div id="theme-controls">
         <span id="theme-icon">☀️</span>
         <label class="toggle-switch" title="Mode sombre / clair">
@@ -498,7 +652,6 @@
           <span>Auto</span>
         </label>
       </div>
-
       <button id="btn-login" onclick="loginWithGoogle()">Connexion Google</button>
       <span id="user-info" style="display:none;"></span>
     </div>
@@ -534,30 +687,19 @@
         <textarea id="event-description" placeholder="Notes, détails..."></textarea>
       </div>
 
+      <!-- Toggle type d'événement : Créneau horaire actif par défaut -->
       <div class="form-group">
         <label>Type</label>
-        <select id="event-allday" onchange="toggleAllDay()">
-          <option value="allday">Journée(s) entière(s)</option>
-          <option value="timed">Créneau horaire</option>
-        </select>
-      </div>
-
-      <!-- Champs journée pleine -->
-      <div id="allday-fields">
-        <div class="form-group">
-          <label>Date de début *</label>
-          <input type="date" id="event-start-date" />
-        </div>
-        <div class="form-group">
-          <label>Date de fin (optionnel, pour plusieurs jours)</label>
-          <input type="date" id="event-end-date" />
+        <div class="type-toggle">
+          <button id="toggle-timed" class="active" onclick="setEventType('timed')">⏱ Créneau horaire</button>
+          <button id="toggle-allday" onclick="setEventType('allday')">📅 Journée entière</button>
         </div>
       </div>
 
-      <!-- Champs créneau horaire -->
-      <div id="timed-fields" style="display:none;">
+      <!-- CHAMPS CRÉNEAU HORAIRE -->
+      <div id="timed-fields">
 
-        <!-- Durée prédéfinie : visible uniquement en mode créneau -->
+        <!-- Durée prédéfinie : auto-calcule la fin -->
         <div class="form-group">
           <label>Durée (optionnel)</label>
           <select id="event-duration" onchange="applyDuration()">
@@ -572,12 +714,36 @@
 
         <div class="form-group">
           <label>Début *</label>
-          <!-- oninput : recalcule EndDate dès que StartDate change si durée sélectionnée -->
-          <input type="datetime-local" id="event-start-datetime" oninput="applyDuration()" />
+          <!-- Ordre : HH:MM puis JJ/MM/AAAA -->
+          <div class="datetime-custom">
+            <div class="time-spinners" id="start-time-spinners">
+              <!-- Les spinners heure/minute sont générés en JS -->
+            </div>
+            <div class="date-selects" id="start-date-selects">
+              <!-- Les selects jour/mois/année sont générés en JS -->
+            </div>
+          </div>
         </div>
+
         <div class="form-group">
           <label>Fin *</label>
-          <input type="datetime-local" id="event-end-datetime" />
+          <div class="datetime-custom">
+            <div class="time-spinners" id="end-time-spinners"></div>
+            <div class="date-selects" id="end-date-selects"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CHAMPS JOURNÉE ENTIÈRE -->
+      <div id="allday-fields" style="display:none;">
+        <div class="form-group">
+          <label>Date de début *</label>
+          <div class="date-only-selects" id="allday-start-selects"></div>
+        </div>
+        <div class="form-group">
+          <label>Date de fin (optionnel, pour plusieurs jours)</label>
+          <div class="date-only-selects" id="allday-end-selects"></div>
         </div>
       </div>
 
@@ -592,11 +758,10 @@
         </select>
       </div>
 
-      <!-- Date de fin de récurrence (visible uniquement si récurrence active) -->
       <div id="recurrence-end-field" style="display:none;">
         <div class="form-group">
           <label>Répéter jusqu'au (optionnel)</label>
-          <input type="date" id="event-recurrence-end" />
+          <div class="date-only-selects" id="recurrence-end-selects"></div>
         </div>
       </div>
 
@@ -615,7 +780,6 @@
         <button id="btn-add-reminder" onclick="addReminderRow()">+ Ajouter un rappel</button>
       </div>
 
-      <!-- Actions : Supprimer à gauche (mode édition uniquement), Annuler + Enregistrer à droite -->
       <div class="modal-actions">
         <button class="btn-delete" id="btn-delete-event" onclick="confirmDelete()" style="display:none;">🗑 Supprimer</button>
         <div class="modal-actions-right">
@@ -635,7 +799,6 @@
       <div id="confirm-actions">
         <button class="btn-cancel" onclick="closeConfirmModal()" style="width:100%;">Non, annuler</button>
         <button class="btn-save" onclick="deleteEvent(false)" style="width:100%;">Oui, supprimer cet événement</button>
-        <!-- Visible uniquement si l'événement est récurrent -->
         <button class="btn-delete" id="btn-delete-series" onclick="deleteEvent(true)" style="width:100%; display:none;">Oui, supprimer toute la série</button>
       </div>
     </div>
@@ -646,17 +809,14 @@
   <div class="overlay" id="overlay-tag">
     <div class="modal">
       <h2>Nouveau tag</h2>
-
       <div class="form-group">
         <label>Couleur *</label>
         <div id="color-grid"></div>
       </div>
-
       <div class="form-group">
         <label>Nom du tag * (min. 1 caractère)</label>
         <input type="text" id="tag-name" placeholder="Ex : Perso, 🏋️ Sport, Travail..." />
       </div>
-
       <div class="modal-actions">
         <div class="modal-actions-right">
           <button class="btn-cancel" onclick="closeTagModal()">Annuler</button>
@@ -672,7 +832,7 @@
     // CONFIGURATION
     // Remplace TON_CLIENT_ID_ICI par ton vrai Client ID Google OAuth
     // =====================
-    const CLIENT_ID = 'TON_CLIENT_ID_ICI';
+    const CLIENT_ID = '959268837895-mqd6t39nk9j8vb2ukoc3pt5m7d7jj1m1.apps.googleusercontent.com';
     const SCOPES = 'https://www.googleapis.com/auth/calendar';
 
     // =====================
@@ -685,9 +845,10 @@
     let editingEventId = null;
     let googleAccessToken = null;
     let calendar = null;
+    let currentEventType = 'timed'; // 'timed' ou 'allday' — créneau par défaut
 
     // =====================
-    // COULEURS DISPONIBLES POUR LES TAGS
+    // COULEURS DES TAGS
     // =====================
     const COLORS = [
       { id: 'red',       hex: '#e53935', label: 'Rouge' },
@@ -703,14 +864,201 @@
       { id: 'black',     hex: '#212121', label: 'Noir' },
     ];
 
+    const RRULE_FREQ = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' };
+
     // =====================
-    // CORRESPONDANCE RÉCURRENCE -> RRULE FREQ
+    // UTILITAIRES DATE
     // =====================
-    const RRULE_FREQ = {
-      daily:   'DAILY',
-      weekly:  'WEEKLY',
-      monthly: 'MONTHLY'
-    };
+    const pad = n => String(n).padStart(2, '0');
+
+    // Retourne les jours d'un mois donné
+    function daysInMonth(month, year) {
+      return new Date(year, month, 0).getDate();
+    }
+
+    // Génère les options <option> pour un select
+    function buildOptions(min, max, selected, labelFn) {
+      let html = '';
+      for (let i = min; i <= max; i++) {
+        const label = labelFn ? labelFn(i) : pad(i);
+        html += `<option value="${i}" ${i === selected ? 'selected' : ''}>${label}</option>`;
+      }
+      return html;
+    }
+
+    // Noms des mois en français
+    const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+    // =====================
+    // CRÉER UN BLOC DATETIME CUSTOM (HH:MM + JJ/MM/AAAA)
+    // prefix : 'start' ou 'end' pour identifier les champs
+    // initDate : objet Date optionnel pour pré-remplir
+    // =====================
+    function buildDatetimeFields(timeContainerId, dateContainerId, initDate) {
+      const now = initDate || new Date();
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const d = now.getDate();
+      const mo = now.getMonth() + 1;
+      const y = now.getFullYear();
+
+      // --- SPINNERS HEURE / MINUTE ---
+      // Chaque spinner est un <span> éditable au scroll (boucle infinie)
+      const timeContainer = document.getElementById(timeContainerId);
+      timeContainer.innerHTML = `
+        <span class="spinner" id="${timeContainerId}-h" data-type="hour">${pad(h)}</span>
+        <span class="time-separator">:</span>
+        <span class="spinner" id="${timeContainerId}-m" data-type="minute">${pad(m)}</span>
+      `;
+
+      // Attacher les événements scroll sur chaque spinner
+      timeContainer.querySelectorAll('.spinner').forEach(spinner => {
+        attachSpinnerScroll(spinner);
+      });
+
+      // --- SELECTS DATE : JJ / MMM / AAAA ---
+      const dateContainer = document.getElementById(dateContainerId);
+      const yearOptions = buildOptions(y - 1, y + 5, y);
+      dateContainer.innerHTML = `
+        <select id="${dateContainerId}-d" onchange="onDateSelectChange('${dateContainerId}')">${buildOptions(1, daysInMonth(mo, y), d)}</select>
+        <select id="${dateContainerId}-mo" onchange="onDateSelectChange('${dateContainerId}')">${buildOptions(1, 12, mo, i => MOIS[i-1])}</select>
+        <select id="${dateContainerId}-y" onchange="onDateSelectChange('${dateContainerId}')">${yearOptions}</select>
+      `;
+    }
+
+    // =====================
+    // CRÉER UN BLOC DATE SEULE (JJ/MMM/AAAA) pour journée entière
+    // =====================
+    function buildDateOnlyFields(containerId, initDate) {
+      const now = initDate || new Date();
+      const d = now.getDate();
+      const mo = now.getMonth() + 1;
+      const y = now.getFullYear();
+      const yearOptions = buildOptions(y - 1, y + 5, y);
+      const container = document.getElementById(containerId);
+      container.innerHTML = `
+        <select id="${containerId}-d">${buildOptions(1, daysInMonth(mo, y), d)}</select>
+        <select id="${containerId}-mo" onchange="onDateOnlySelectChange('${containerId}')">${buildOptions(1, 12, mo, i => MOIS[i-1])}</select>
+        <select id="${containerId}-y" onchange="onDateOnlySelectChange('${containerId}')">${yearOptions}</select>
+      `;
+    }
+
+    // Recalcule les jours disponibles quand le mois ou l'année change (selects date seule)
+    function onDateOnlySelectChange(containerId) {
+      const mo = parseInt(document.getElementById(`${containerId}-mo`).value);
+      const y = parseInt(document.getElementById(`${containerId}-y`).value);
+      const dSel = document.getElementById(`${containerId}-d`);
+      const currentDay = parseInt(dSel.value);
+      const maxDay = daysInMonth(mo, y);
+      dSel.innerHTML = buildOptions(1, maxDay, Math.min(currentDay, maxDay));
+    }
+
+    // Même chose pour les selects dans un bloc datetime
+    function onDateSelectChange(dateContainerId) {
+      const mo = parseInt(document.getElementById(`${dateContainerId}-mo`).value);
+      const y = parseInt(document.getElementById(`${dateContainerId}-y`).value);
+      const dSel = document.getElementById(`${dateContainerId}-d`);
+      const currentDay = parseInt(dSel.value);
+      const maxDay = daysInMonth(mo, y);
+      dSel.innerHTML = buildOptions(1, maxDay, Math.min(currentDay, maxDay));
+    }
+
+    // =====================
+    // SCROLL INFINI SUR LES SPINNERS HEURE / MINUTE
+    // Scroll up = +1, scroll down = -1, boucle infinie
+    // =====================
+    function attachSpinnerScroll(spinner) {
+      spinner.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        const type = this.dataset.type;
+        let val = parseInt(this.textContent);
+        const delta = e.deltaY < 0 ? 1 : -1; // scroll up = +1
+
+        if (type === 'hour') {
+          val = (val + delta + 24) % 24;
+        } else {
+          val = (val + delta + 60) % 60;
+        }
+
+        this.textContent = pad(val);
+
+        // Si une durée est sélectionnée, recalculer la fin
+        applyDuration();
+      }, { passive: false });
+
+      // Support tactile (swipe vertical sur mobile)
+      let touchStartY = null;
+      spinner.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; });
+      spinner.addEventListener('touchmove', e => {
+        e.preventDefault();
+        if (touchStartY === null) return;
+        const diff = touchStartY - e.touches[0].clientY;
+        if (Math.abs(diff) < 10) return;
+
+        const type = spinner.dataset.type;
+        let val = parseInt(spinner.textContent);
+        const delta = diff > 0 ? 1 : -1;
+
+        if (type === 'hour') val = (val + delta + 24) % 24;
+        else val = (val + delta + 60) % 60;
+
+        spinner.textContent = pad(val);
+        touchStartY = e.touches[0].clientY;
+        applyDuration();
+      }, { passive: false });
+    }
+
+    // =====================
+    // LIRE LA VALEUR D'UN BLOC DATETIME CUSTOM
+    // Retourne une string ISO "YYYY-MM-DDTHH:MM"
+    // =====================
+    function getDatetimeValue(timeContainerId, dateContainerId) {
+      const h = document.getElementById(`${timeContainerId}-h`).textContent;
+      const m = document.getElementById(`${timeContainerId}-m`).textContent;
+      const d = pad(parseInt(document.getElementById(`${dateContainerId}-d`).value));
+      const mo = pad(parseInt(document.getElementById(`${dateContainerId}-mo`).value));
+      const y = document.getElementById(`${dateContainerId}-y`).value;
+      return `${y}-${mo}-${d}T${h}:${m}`;
+    }
+
+    // =====================
+    // LIRE LA VALEUR D'UN BLOC DATE SEULE
+    // Retourne "YYYY-MM-DD" ou "" si vide
+    // =====================
+    function getDateOnlyValue(containerId) {
+      const dEl = document.getElementById(`${containerId}-d`);
+      if (!dEl) return '';
+      const d = pad(parseInt(dEl.value));
+      const mo = pad(parseInt(document.getElementById(`${containerId}-mo`).value));
+      const y = document.getElementById(`${containerId}-y`).value;
+      return `${y}-${mo}-${d}`;
+    }
+
+    // =====================
+    // ÉCRIRE UNE VALEUR DANS UN BLOC DATETIME CUSTOM
+    // isoString : "YYYY-MM-DDTHH:MM"
+    // =====================
+    function setDatetimeValue(timeContainerId, dateContainerId, isoString) {
+      if (!isoString) return;
+      const dt = new Date(isoString);
+      document.getElementById(`${timeContainerId}-h`).textContent = pad(dt.getHours());
+      document.getElementById(`${timeContainerId}-m`).textContent = pad(dt.getMinutes());
+      document.getElementById(`${dateContainerId}-d`).value = dt.getDate();
+      document.getElementById(`${dateContainerId}-mo`).value = dt.getMonth() + 1;
+      document.getElementById(`${dateContainerId}-y`).value = dt.getFullYear();
+    }
+
+    // =====================
+    // ÉCRIRE UNE VALEUR DANS UN BLOC DATE SEULE
+    // =====================
+    function setDateOnlyValue(containerId, dateStr) {
+      if (!dateStr) return;
+      const parts = dateStr.split('-');
+      if (parts.length < 3) return;
+      document.getElementById(`${containerId}-d`).value = parseInt(parts[2]);
+      document.getElementById(`${containerId}-mo`).value = parseInt(parts[1]);
+      document.getElementById(`${containerId}-y`).value = parseInt(parts[0]);
+    }
 
     // =====================
     // INITIALISATION
@@ -718,16 +1066,20 @@
     document.addEventListener('DOMContentLoaded', function () {
       initTheme();
 
+      // Construire les blocs datetime custom à l'initialisation
+      const now = new Date();
+      buildDatetimeFields('start-time-spinners', 'start-date-selects', now);
+      buildDatetimeFields('end-time-spinners', 'end-date-selects', new Date(now.getTime() + 3600000));
+      buildDateOnlyFields('allday-start-selects', now);
+      buildDateOnlyFields('allday-end-selects', now);
+      buildDateOnlyFields('recurrence-end-selects', now);
+
       const calendarEl = document.getElementById('calendar');
       calendar = new FullCalendar.Calendar(calendarEl, {
         locale: 'fr',
         initialView: 'dayGridMonth',
         height: 'auto',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: ''
-        },
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
         dateClick: function(info) { openEventModal(info.dateStr); },
         eventClick: function(info) { openEditEventModal(info.event); },
         events: getCalendarEvents()
@@ -739,14 +1091,12 @@
     });
 
     // =====================
-    // CONVERTIR LES ÉVÉNEMENTS EN FORMAT FULLCALENDAR
-    // Gère les événements simples et récurrents via rrule
+    // FORMAT FULLCALENDAR EVENTS
     // =====================
     function getCalendarEvents() {
       return events.map(ev => {
         const tag = tags.find(t => t.id === ev.tagId);
-        const color = tag ? tag.color : '#4285f4';
-
+        const color = tag ? tag.color : '#47a88d';
         const fcEvent = {
           id: ev.id,
           title: ev.title,
@@ -754,23 +1104,13 @@
           allDay: ev.allDay,
           backgroundColor: color,
           borderColor: color,
-          extendedProps: {
-            description: ev.description,
-            recurrence: ev.recurrence,
-            seriesId: ev.id
-          }
+          extendedProps: { description: ev.description, recurrence: ev.recurrence, seriesId: ev.id }
         };
 
         if (ev.recurrence && ev.recurrence !== 'none') {
-          // Événement récurrent : on passe une rrule à FullCalendar
-          const rruleObj = {
-            freq: RRULE_FREQ[ev.recurrence],
-            dtstart: ev.start
-          };
+          const rruleObj = { freq: RRULE_FREQ[ev.recurrence], dtstart: ev.start };
           if (ev.recurrenceEnd) rruleObj.until = ev.recurrenceEnd;
           fcEvent.rrule = rruleObj;
-
-          // Durée nécessaire pour afficher correctement les occurrences avec créneau horaire
           if (!ev.allDay && ev.end) {
             const diffMin = Math.round((new Date(ev.end) - new Date(ev.start)) / 60000);
             fcEvent.duration = { minutes: diffMin };
@@ -794,27 +1134,45 @@
     }
 
     // =====================
+    // TOGGLE TYPE D'ÉVÉNEMENT
+    // =====================
+    function setEventType(type) {
+      currentEventType = type;
+      document.getElementById('toggle-timed').classList.toggle('active', type === 'timed');
+      document.getElementById('toggle-allday').classList.toggle('active', type === 'allday');
+      document.getElementById('timed-fields').style.display = type === 'timed' ? 'block' : 'none';
+      document.getElementById('allday-fields').style.display = type === 'allday' ? 'block' : 'none';
+    }
+
+    // =====================
     // OUVRIR LA MODALE ÉVÉNEMENT (création)
+    // dateStr : date pré-remplie si clic sur une case calendrier (format YYYY-MM-DD)
     // =====================
     function openEventModal(dateStr) {
       editingEventId = null;
       document.getElementById('modal-event-title').textContent = 'Nouvel événement';
       document.getElementById('event-title').value = '';
       document.getElementById('event-description').value = '';
-      document.getElementById('event-allday').value = 'allday';
       document.getElementById('event-recurrence').value = 'none';
       document.getElementById('event-duration').value = '';
-      document.getElementById('event-recurrence-end').value = '';
-      document.getElementById('reminders-list').innerHTML = '';
       document.getElementById('btn-delete-event').style.display = 'none';
       selectedTagId = null;
 
-      if (dateStr) document.getElementById('event-start-date').value = dateStr;
-      else document.getElementById('event-start-date').value = '';
-      document.getElementById('event-end-date').value = '';
-
-      toggleAllDay();
+      // Par défaut : créneau horaire
+      setEventType('timed');
       toggleRecurrenceEnd();
+
+      // Pré-remplir avec la date cliquée ou maintenant
+      const baseDate = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
+      const endDate = new Date(baseDate.getTime() + 3600000);
+
+      buildDatetimeFields('start-time-spinners', 'start-date-selects', baseDate);
+      buildDatetimeFields('end-time-spinners', 'end-date-selects', endDate);
+      buildDateOnlyFields('allday-start-selects', baseDate);
+      buildDateOnlyFields('allday-end-selects', baseDate);
+      buildDateOnlyFields('recurrence-end-selects', baseDate);
+
+      document.getElementById('reminders-list').innerHTML = '';
       renderTagList();
       document.getElementById('overlay-event').classList.add('active');
     }
@@ -831,28 +1189,33 @@
       document.getElementById('modal-event-title').textContent = "Modifier l'événement";
       document.getElementById('event-title').value = ev.title;
       document.getElementById('event-description').value = ev.description || '';
-      document.getElementById('event-allday').value = ev.allDay ? 'allday' : 'timed';
       document.getElementById('event-recurrence').value = ev.recurrence || 'none';
       document.getElementById('event-duration').value = '';
-      document.getElementById('event-recurrence-end').value = ev.recurrenceEnd || '';
       selectedTagId = ev.tagId || null;
 
-      if (ev.allDay) {
-        document.getElementById('event-start-date').value = ev.start.split('T')[0];
-        document.getElementById('event-end-date').value = ev.end ? ev.end.split('T')[0] : '';
+      setEventType(ev.allDay ? 'allday' : 'timed');
+      toggleRecurrenceEnd();
+
+      if (!ev.allDay) {
+        // Reconstruire les spinners avec les valeurs de l'événement
+        const startDate = new Date(ev.start);
+        const endDate = ev.end ? new Date(ev.end) : new Date(startDate.getTime() + 3600000);
+        buildDatetimeFields('start-time-spinners', 'start-date-selects', startDate);
+        buildDatetimeFields('end-time-spinners', 'end-date-selects', endDate);
       } else {
-        document.getElementById('event-start-datetime').value = ev.start;
-        document.getElementById('event-end-datetime').value = ev.end || '';
+        const startDate = new Date(ev.start + 'T00:00:00');
+        buildDateOnlyFields('allday-start-selects', startDate);
+        if (ev.end) buildDateOnlyFields('allday-end-selects', new Date(ev.end + 'T00:00:00'));
+      }
+
+      if (ev.recurrenceEnd) {
+        buildDateOnlyFields('recurrence-end-selects', new Date(ev.recurrenceEnd + 'T00:00:00'));
       }
 
       document.getElementById('reminders-list').innerHTML = '';
       (ev.reminders || []).forEach(r => addReminderRow(r.value, r.unit));
 
-      // Afficher le bouton supprimer uniquement en mode édition
       document.getElementById('btn-delete-event').style.display = 'inline-block';
-
-      toggleAllDay();
-      toggleRecurrenceEnd();
       renderTagList();
       document.getElementById('overlay-event').classList.add('active');
     }
@@ -862,37 +1225,26 @@
     }
 
     // =====================
-    // BASCULER JOURNÉE PLEINE / CRÉNEAU
-    // =====================
-    function toggleAllDay() {
-      const isAllDay = document.getElementById('event-allday').value === 'allday';
-      document.getElementById('allday-fields').style.display = isAllDay ? 'block' : 'none';
-      document.getElementById('timed-fields').style.display = isAllDay ? 'none' : 'block';
-    }
-
-    // =====================
-    // AFFICHER/MASQUER LE CHAMP FIN DE RÉCURRENCE
+    // FIN DE RÉCURRENCE
     // =====================
     function toggleRecurrenceEnd() {
       const rec = document.getElementById('event-recurrence').value;
-      document.getElementById('recurrence-end-field').style.display =
-        rec !== 'none' ? 'block' : 'none';
+      document.getElementById('recurrence-end-field').style.display = rec !== 'none' ? 'block' : 'none';
     }
 
     // =====================
-    // CALCUL AUTOMATIQUE DE ENDDATE SELON DURÉE + STARTDATE
-    // Déclenché au changement de durée OU de StartDate
+    // CALCUL AUTOMATIQUE DE LA FIN SELON DURÉE + DÉBUT
     // =====================
     function applyDuration() {
       const durationMin = parseInt(document.getElementById('event-duration').value);
-      const startVal = document.getElementById('event-start-datetime').value;
-      if (!durationMin || !startVal) return;
+      if (!durationMin) return;
 
-      const endDate = new Date(new Date(startVal).getTime() + durationMin * 60000);
-      const pad = n => String(n).padStart(2, '0');
-      document.getElementById('event-end-datetime').value =
-        `${endDate.getFullYear()}-${pad(endDate.getMonth()+1)}-${pad(endDate.getDate())}` +
-        `T${pad(endDate.getHours())}:${pad(endDate.getMinutes())}`;
+      const startIso = getDatetimeValue('start-time-spinners', 'start-date-selects');
+      const startMs = new Date(startIso).getTime();
+      if (isNaN(startMs)) return;
+
+      const endDate = new Date(startMs + durationMin * 60000);
+      buildDatetimeFields('end-time-spinners', 'end-date-selects', endDate);
     }
 
     // =====================
@@ -902,16 +1254,16 @@
       const title = document.getElementById('event-title').value.trim();
       if (!title) { alert('Le titre est obligatoire.'); return; }
 
-      const isAllDay = document.getElementById('event-allday').value === 'allday';
+      const isAllDay = currentEventType === 'allday';
       let start, end;
 
       if (isAllDay) {
-        start = document.getElementById('event-start-date').value;
-        end = document.getElementById('event-end-date').value || null;
+        start = getDateOnlyValue('allday-start-selects');
+        end = getDateOnlyValue('allday-end-selects') || null;
         if (!start) { alert('La date de début est obligatoire.'); return; }
       } else {
-        start = document.getElementById('event-start-datetime').value;
-        end = document.getElementById('event-end-datetime').value || null;
+        start = getDatetimeValue('start-time-spinners', 'start-date-selects');
+        end = getDatetimeValue('end-time-spinners', 'end-date-selects') || null;
         if (!start) { alert('La date/heure de début est obligatoire.'); return; }
       }
 
@@ -930,7 +1282,7 @@
         end,
         allDay: isAllDay,
         recurrence: document.getElementById('event-recurrence').value,
-        recurrenceEnd: document.getElementById('event-recurrence-end').value || null,
+        recurrenceEnd: getDateOnlyValue('recurrence-end-selects') || null,
         tagId: selectedTagId || null,
         reminders
       };
@@ -947,25 +1299,19 @@
       closeEventModal();
     }
 
-    // =====================
-    // RAFRAÎCHIR LE CALENDRIER
-    // =====================
     function refreshCalendar() {
       calendar.removeAllEvents();
       calendar.addEventSource(getCalendarEvents());
     }
 
     // =====================
-    // SUPPRESSION : OUVRIR LA POPUP DE CONFIRMATION
+    // SUPPRESSION
     // =====================
     function confirmDelete() {
       const ev = events.find(e => e.id === editingEventId);
       if (!ev) return;
-
-      // Afficher "Toute la série" uniquement si l'événement est récurrent
       const isRecurrent = ev.recurrence && ev.recurrence !== 'none';
       document.getElementById('btn-delete-series').style.display = isRecurrent ? 'block' : 'none';
-
       document.getElementById('overlay-confirm').classList.add('active');
     }
 
@@ -973,8 +1319,6 @@
       document.getElementById('overlay-confirm').classList.remove('active');
     }
 
-    // deleteSeries = true : supprime la règle entière (toutes les occurrences)
-    // deleteSeries = false : supprime cet événement uniquement
     function deleteEvent(deleteSeries) {
       events = events.filter(e => e.id !== editingEventId);
       localStorage.setItem('calendapp_events', JSON.stringify(events));
@@ -984,12 +1328,11 @@
     }
 
     // =====================
-    // AFFICHER LES TAGS
+    // TAGS
     // =====================
     function renderTagList() {
       const container = document.getElementById('tag-list');
       container.innerHTML = '';
-
       tags.forEach(tag => {
         const chip = document.createElement('span');
         chip.className = 'tag-chip' + (selectedTagId === tag.id ? ' selected' : '');
@@ -1001,7 +1344,6 @@
         };
         container.appendChild(chip);
       });
-
       const btn = document.createElement('button');
       btn.id = 'btn-new-tag';
       btn.textContent = '+ Nouveau tag';
@@ -1010,8 +1352,7 @@
     }
 
     // =====================
-    // AJOUTER UNE LIGNE DE RAPPEL
-    // Valeurs par défaut : 10 minutes
+    // RAPPELS (valeur par défaut : 10 minutes)
     // =====================
     function addReminderRow(value = 10, unit = 'minutes') {
       const row = document.createElement('div');
@@ -1019,10 +1360,10 @@
       row.innerHTML = `
         <input type="number" min="1" value="${value}" />
         <select>
-          <option value="minutes" ${unit === 'minutes' ? 'selected' : ''}>minutes avant</option>
-          <option value="hours"   ${unit === 'hours'   ? 'selected' : ''}>heures avant</option>
-          <option value="days"    ${unit === 'days'    ? 'selected' : ''}>jours avant</option>
-          <option value="weeks"   ${unit === 'weeks'   ? 'selected' : ''}>semaines avant</option>
+          <option value="minutes" ${unit==='minutes'?'selected':''}>minutes avant</option>
+          <option value="hours"   ${unit==='hours'  ?'selected':''}>heures avant</option>
+          <option value="days"    ${unit==='days'   ?'selected':''}>jours avant</option>
+          <option value="weeks"   ${unit==='weeks'  ?'selected':''}>semaines avant</option>
         </select>
         <button class="btn-remove-reminder" onclick="this.parentElement.remove()">✕</button>
       `;
@@ -1050,9 +1391,7 @@
         const dot = document.createElement('div');
         dot.className = 'color-dot';
         dot.style.backgroundColor = c.hex;
-        if (['white', 'yellow', 'lightgray'].includes(c.id)) {
-          dot.style.border = '3px solid #bbb';
-        }
+        if (['white', 'yellow', 'lightgray'].includes(c.id)) dot.style.border = '3px solid #bbb';
         dot.title = c.label;
         dot.onclick = () => {
           document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
@@ -1065,9 +1404,8 @@
 
     function saveTag() {
       const name = document.getElementById('tag-name').value.trim();
-      if (!name) { alert('Le nom du tag est obligatoire (min. 1 caractère).'); return; }
+      if (!name) { alert('Le nom du tag est obligatoire.'); return; }
       if (!selectedColor) { alert('Veuillez choisir une couleur.'); return; }
-
       const newTag = { id: Date.now().toString(), name, color: selectedColor };
       tags.push(newTag);
       localStorage.setItem('calendapp_tags', JSON.stringify(tags));
@@ -1077,12 +1415,10 @@
     }
 
     // =====================
-    // GESTION DU THÈME (clair / sombre / auto)
-    // Le choix est mémorisé dans localStorage
+    // THÈME (clair / sombre / auto) — mémorisé dans localStorage
     // =====================
     function initTheme() {
       const saved = localStorage.getItem('calendapp_theme') || 'auto';
-
       if (saved === 'auto') {
         document.getElementById('check-auto-theme').checked = true;
         document.getElementById('toggle-dark').disabled = true;
@@ -1097,18 +1433,15 @@
       }
     }
 
-    // Déclenché par le toggle clair/sombre
     function onThemeToggle() {
       const isDark = document.getElementById('toggle-dark').checked;
       applyTheme(isDark);
       localStorage.setItem('calendapp_theme', isDark ? 'dark' : 'light');
     }
 
-    // Déclenché par la coche "Auto"
     function onAutoThemeChange() {
       const isAuto = document.getElementById('check-auto-theme').checked;
       document.getElementById('toggle-dark').disabled = isAuto;
-
       if (isAuto) {
         localStorage.setItem('calendapp_theme', 'auto');
         applySystemTheme();
@@ -1120,14 +1453,12 @@
       }
     }
 
-    // Lit le thème du système et l'applique
     function applySystemTheme() {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       applyTheme(prefersDark);
       document.getElementById('toggle-dark').checked = prefersDark;
     }
 
-    // Applique concrètement le thème via data-theme sur <html>
     function applyTheme(dark) {
       document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
       document.getElementById('theme-icon').textContent = dark ? '🌙' : '☀️';
@@ -1151,13 +1482,11 @@
     }
 
     // =====================
-    // IMPORTER LES ÉVÉNEMENTS GOOGLE CALENDAR
-    // Récupère les 6 prochains mois
+    // IMPORT GOOGLE CALENDAR (6 prochains mois)
     // =====================
     function fetchGoogleCalendarEvents() {
       const now = new Date().toISOString();
       const sixMonths = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString();
-
       fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&timeMax=${sixMonths}&singleEvents=true&orderBy=startTime`, {
         headers: { Authorization: `Bearer ${googleAccessToken}` }
       })
@@ -1176,9 +1505,7 @@
             reminders: [],
             fromGoogle: true
           }));
-
-          const localEvents = events.filter(e => !e.fromGoogle);
-          events = [...localEvents, ...googleEvents];
+          events = [...events.filter(e => !e.fromGoogle), ...googleEvents];
           localStorage.setItem('calendapp_events', JSON.stringify(events));
           refreshCalendar();
           fetchUserInfo();
@@ -1187,9 +1514,6 @@
       .catch(err => console.error('Erreur Google Calendar:', err));
     }
 
-    // =====================
-    // AFFICHER LE NOM DE L'UTILISATEUR CONNECTÉ
-    // =====================
     function fetchUserInfo() {
       fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${googleAccessToken}` }
