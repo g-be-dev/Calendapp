@@ -1,14 +1,950 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#4285f4">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Couleur de la barre de statut Android -->
+  <meta name="theme-color" content="#4285f4" />
   <title>Calendapp</title>
-  <link rel="manifest" href="manifest.json">
+
+  <!-- Lien vers le manifest PWA (icône, nom, mode standalone) -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Chargement de FullCalendar : bibliothèque qui gère l'affichage du calendrier -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
+  <!-- Chargement de la bibliothèque Google Identity Services pour la connexion OAuth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <style>
+    /* =====================
+       RESET & BASE
+    ===================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f6fb;
+      color: #222;
+    }
+
+    /* =====================
+       BARRE DU HAUT
+    ===================== */
+    #topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #4285f4;
+      color: white;
+      padding: 12px 16px;
+    }
+
+    #topbar h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    /* Bouton de connexion Google */
+    #btn-login {
+      background: white;
+      color: #4285f4;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    #btn-login:hover {
+      background: #e8f0fe;
+    }
+
+    /* Nom de l'utilisateur connecté affiché dans la barre */
+    #user-info {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    /* =====================
+       SÉLECTEUR DE VUE
+       (Mois / Semaine / Jour)
+    ===================== */
+    #view-selector {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    #view-selector button {
+      border: 1px solid #4285f4;
+      background: white;
+      color: #4285f4;
+      border-radius: 20px;
+      padding: 5px 16px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    /* Bouton actif (vue sélectionnée) */
+    #view-selector button.active {
+      background: #4285f4;
+      color: white;
+    }
+
+    /* =====================
+       CONTENEUR DU CALENDRIER
+    ===================== */
+    #calendar-container {
+      padding: 12px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* =====================
+       BOUTON AJOUTER UN ÉVÉNEMENT
+    ===================== */
+    #btn-add-event {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      font-size: 1.8rem;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 100;
+    }
+
+    #btn-add-event:hover {
+      background: #3367d6;
+    }
+
+    /* =====================
+       FOND SOMBRE DERRIÈRE LES MODALES
+    ===================== */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Quand la modale est active, on affiche l'overlay en flex */
+    .overlay.active {
+      display: flex;
+    }
+
+    /* =====================
+       MODALE GÉNÉRIQUE
+    ===================== */
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .modal h2 {
+      margin-bottom: 16px;
+      font-size: 1.1rem;
+      color: #4285f4;
+    }
+
+    /* =====================
+       CHAMPS DE FORMULAIRE
+    ===================== */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    /* =====================
+       BOUTONS DES MODALES
+    ===================== */
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn-cancel {
+      background: #f1f3f4;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-save {
+      background: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-save:hover { background: #3367d6; }
+
+    /* =====================
+       SÉLECTEUR DE TAG
+    ===================== */
+    #tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    /* Chaque tag affiché comme une pastille colorée */
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      color: white;
+    }
+
+    /* Tag sélectionné : bordure blanche marquée */
+    .tag-chip.selected {
+      border-color: #222;
+    }
+
+    /* Bouton + pour créer un nouveau tag */
+    #btn-new-tag {
+      background: #e8f0fe;
+      color: #4285f4;
+      border: none;
+      border-radius: 20px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    /* =====================
+       GRILLE DE COULEURS (modale tag)
+    ===================== */
+    #color-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0;
+    }
+
+    /* Chaque cercle de couleur cliquable */
+    .color-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+    }
+
+    /* Couleur sélectionnée : bordure sombre */
+    .color-dot.selected {
+      border-color: #222;
+    }
+
+    /* =====================
+       RAPPELS
+    ===================== */
+    #reminders-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .reminder-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .reminder-row input[type="number"] {
+      width: 70px;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    .reminder-row select {
+      flex: 1;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+    }
+
+    /* Bouton pour supprimer un rappel */
+    .btn-remove-reminder {
+      background: none;
+      border: none;
+      color: #e53935;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    /* Bouton pour ajouter un rappel */
+    #btn-add-reminder {
+      background: none;
+      border: 1px dashed #aaa;
+      border-radius: 6px;
+      padding: 5px 10px;
+      color: #555;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-top: 4px;
+      width: fit-content;
+    }
+
+    /* =====================
+       RESPONSIVE MOBILE
+    ===================== */
+    @media (max-width: 600px) {
+      #topbar h1 { font-size: 1rem; }
+      .modal { padding: 16px; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Calendapp</h1>
-  <p>App en cours de construction...</p>
+
+  <!-- =====================
+       BARRE DU HAUT
+  ===================== -->
+  <div id="topbar">
+    <h1>📅 Calendapp</h1>
+    <div>
+      <!-- Affiché quand l'utilisateur n'est pas connecté -->
+      <button id="btn-login" onclick="loginWithGoogle()">Connexion Google</button>
+      <!-- Affiché quand l'utilisateur est connecté -->
+      <span id="user-info" style="display:none;"></span>
+    </div>
+  </div>
+
+  <!-- =====================
+       SÉLECTEUR DE VUE
+  ===================== -->
+  <div id="view-selector">
+    <button onclick="changeView('dayGridMonth')" class="active" id="btn-month">Mois</button>
+    <button onclick="changeView('timeGridWeek')" id="btn-week">Semaine</button>
+    <button onclick="changeView('timeGridDay')" id="btn-day">Jour</button>
+  </div>
+
+  <!-- =====================
+       CALENDRIER
+  ===================== -->
+  <div id="calendar-container">
+    <div id="calendar"></div>
+  </div>
+
+  <!-- Bouton flottant pour créer un événement -->
+  <button id="btn-add-event" onclick="openEventModal()" title="Ajouter un événement">+</button>
+
+
+  <!-- =====================
+       MODALE : CRÉER / MODIFIER UN ÉVÉNEMENT
+  ===================== -->
+  <div class="overlay" id="overlay-event">
+    <div class="modal">
+      <h2 id="modal-event-title">Nouvel événement</h2>
+
+      <!-- Titre de l'événement -->
+      <div class="form-group">
+        <label>Titre *</label>
+        <input type="text" id="event-title" placeholder="Ex : Réunion, Anniversaire..." />
+      </div>
+
+      <!-- Description libre -->
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="event-description" placeholder="Notes, détails..."></textarea>
+      </div>
+
+      <!-- Type : journée pleine ou créneau horaire -->
+      <div class="form-group">
+        <label>Type</label>
+        <select id="event-allday" onchange="toggleAllDay()">
+          <option value="allday">Journée(s) entière(s)</option>
+          <option value="timed">Créneau horaire</option>
+        </select>
+      </div>
+
+      <!-- Dates pour journée pleine -->
+      <div id="allday-fields">
+        <div class="form-group">
+          <label>Date de début *</label>
+          <input type="date" id="event-start-date" />
+        </div>
+        <div class="form-group">
+          <label>Date de fin (optionnel, pour plusieurs jours)</label>
+          <input type="date" id="event-end-date" />
+        </div>
+      </div>
+
+      <!-- Dates/heures pour créneau horaire -->
+      <div id="timed-fields" style="display:none;">
+        <div class="form-group">
+          <label>Début *</label>
+          <input type="datetime-local" id="event-start-datetime" />
+        </div>
+        <div class="form-group">
+          <label>Fin *</label>
+          <input type="datetime-local" id="event-end-datetime" />
+        </div>
+      </div>
+
+      <!-- Récurrence -->
+      <div class="form-group">
+        <label>Récurrence</label>
+        <select id="event-recurrence">
+          <option value="none">Aucune (ponctuel)</option>
+          <option value="daily">Tous les jours</option>
+          <option value="weekly">Toutes les semaines</option>
+          <option value="monthly">Tous les mois</option>
+        </select>
+      </div>
+
+      <!-- Sélection du tag -->
+      <div class="form-group">
+        <label>Tag (optionnel)</label>
+        <div id="tag-list">
+          <!-- Les tags enregistrés s'affichent ici dynamiquement -->
+          <button id="btn-new-tag" onclick="openTagModal()">+ Nouveau tag</button>
+        </div>
+      </div>
+
+      <!-- Rappels -->
+      <div class="form-group">
+        <label>Rappels</label>
+        <div id="reminders-list"></div>
+        <button id="btn-add-reminder" onclick="addReminderRow()">+ Ajouter un rappel</button>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeEventModal()">Annuler</button>
+        <button class="btn-save" onclick="saveEvent()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =====================
+       MODALE : CRÉER UN TAG
+  ===================== -->
+  <div class="overlay" id="overlay-tag">
+    <div class="modal">
+      <h2>Nouveau tag</h2>
+
+      <!-- Sélection de la couleur parmi 11 options -->
+      <div class="form-group">
+        <label>Couleur *</label>
+        <div id="color-grid">
+          <!-- Les cercles de couleur sont générés dynamiquement en JS -->
+        </div>
+      </div>
+
+      <!-- Nom du tag : texte libre alphanumérique + émojis -->
+      <div class="form-group">
+        <label>Nom du tag * (min. 1 caractère)</label>
+        <input type="text" id="tag-name" placeholder="Ex : Perso, 🏋️ Sport, Travail..." />
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeTagModal()">Annuler</button>
+        <button class="btn-save" onclick="saveTag()">Créer le tag</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // =====================
+    // CONFIGURATION
+    // Remplace TON_CLIENT_ID_ICI par ton vrai Client ID Google OAuth
+    // =====================
+    const CLIENT_ID = '959268837895-mqd6t39nk9j8vb2ukoc3pt5m7d7jj1m1.apps.googleusercontent.com';
+    const SCOPES = 'https://www.googleapis.com/auth/calendar';
+
+    // =====================
+    // ÉTAT GLOBAL DE L'APP
+    // Toutes les données sont stockées dans localStorage (persistance locale)
+    // =====================
+    let events = JSON.parse(localStorage.getItem('calendapp_events') || '[]');
+    let tags = JSON.parse(localStorage.getItem('calendapp_tags') || '[]');
+    let selectedTagId = null;   // Tag sélectionné dans la modale événement
+    let selectedColor = null;   // Couleur sélectionnée dans la modale tag
+    let editingEventId = null;  // ID de l'événement en cours de modification (null = nouveau)
+    let googleAccessToken = null; // Token OAuth Google (obtenu après connexion)
+    let calendar = null;        // Instance FullCalendar
+
+    // =====================
+    // COULEURS DISPONIBLES POUR LES TAGS
+    // Arc-en-ciel + nuances de gris + blanc + noir
+    // =====================
+    const COLORS = [
+      { id: 'red',        hex: '#e53935', label: 'Rouge' },
+      { id: 'orange',     hex: '#fb8c00', label: 'Orange' },
+      { id: 'yellow',     hex: '#fdd835', label: 'Jaune' },
+      { id: 'green',      hex: '#43a047', label: 'Vert' },
+      { id: 'blue',       hex: '#1e88e5', label: 'Bleu' },
+      { id: 'indigo',     hex: '#3949ab', label: 'Indigo' },
+      { id: 'violet',     hex: '#8e24aa', label: 'Violet' },
+      { id: 'white',      hex: '#ffffff', label: 'Blanc' },
+      { id: 'lightgray',  hex: '#bdbdbd', label: 'Gris clair' },
+      { id: 'darkgray',   hex: '#616161', label: 'Gris foncé' },
+      { id: 'black',      hex: '#212121', label: 'Noir' },
+    ];
+
+    // =====================
+    // INITIALISATION DU CALENDRIER (FullCalendar)
+    // =====================
+    document.addEventListener('DOMContentLoaded', function () {
+      const calendarEl = document.getElementById('calendar');
+
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        // Langue française
+        locale: 'fr',
+        // Vue par défaut : mois
+        initialView: 'dayGridMonth',
+        // Hauteur automatique selon le contenu
+        height: 'auto',
+        // Afficher les boutons de navigation natifs de FullCalendar
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: ''
+        },
+        // Cliquer sur une date ouvre la modale avec la date pré-remplie
+        dateClick: function(info) {
+          openEventModal(info.dateStr);
+        },
+        // Cliquer sur un événement ouvre la modale en mode édition
+        eventClick: function(info) {
+          openEditEventModal(info.event);
+        },
+        // Chargement des événements depuis localStorage
+        events: getCalendarEvents()
+      });
+
+      calendar.render();
+
+      // Initialiser la grille de couleurs dans la modale tag
+      renderColorGrid();
+
+      // Afficher les tags existants dans la modale événement
+      renderTagList();
+    });
+
+    // =====================
+    // RÉCUPÉRER LES ÉVÉNEMENTS POUR FULLCALENDAR
+    // Convertit le format interne en format FullCalendar
+    // =====================
+    function getCalendarEvents() {
+      return events.map(ev => {
+        const tag = tags.find(t => t.id === ev.tagId);
+        return {
+          id: ev.id,
+          title: ev.title,
+          start: ev.start,
+          end: ev.end || null,
+          allDay: ev.allDay,
+          backgroundColor: tag ? tag.color : '#4285f4',
+          borderColor: tag ? tag.color : '#4285f4',
+          extendedProps: { description: ev.description, recurrence: ev.recurrence }
+        };
+      });
+    }
+
+    // =====================
+    // CHANGER DE VUE (Mois / Semaine / Jour)
+    // =====================
+    function changeView(viewName) {
+      calendar.changeView(viewName);
+      // Mettre à jour les boutons actifs
+      document.querySelectorAll('#view-selector button').forEach(b => b.classList.remove('active'));
+      const map = { dayGridMonth: 'btn-month', timeGridWeek: 'btn-week', timeGridDay: 'btn-day' };
+      document.getElementById(map[viewName]).classList.add('active');
+    }
+
+    // =====================
+    // OUVRIR LA MODALE ÉVÉNEMENT (nouveau)
+    // dateStr : date pré-remplie si on clique sur une case du calendrier
+    // =====================
+    function openEventModal(dateStr) {
+      editingEventId = null;
+      document.getElementById('modal-event-title').textContent = 'Nouvel événement';
+      document.getElementById('event-title').value = '';
+      document.getElementById('event-description').value = '';
+      document.getElementById('event-allday').value = 'allday';
+      document.getElementById('event-recurrence').value = 'none';
+      document.getElementById('reminders-list').innerHTML = '';
+      selectedTagId = null;
+
+      // Pré-remplir la date si fournie
+      if (dateStr) {
+        document.getElementById('event-start-date').value = dateStr;
+      } else {
+        document.getElementById('event-start-date').value = '';
+      }
+      document.getElementById('event-end-date').value = '';
+
+      toggleAllDay();
+      renderTagList();
+      document.getElementById('overlay-event').classList.add('active');
+    }
+
+    // =====================
+    // OUVRIR LA MODALE ÉVÉNEMENT (modification)
+    // =====================
+    function openEditEventModal(fcEvent) {
+      editingEventId = fcEvent.id;
+      const ev = events.find(e => e.id === fcEvent.id);
+      if (!ev) return;
+
+      document.getElementById('modal-event-title').textContent = 'Modifier l\'événement';
+      document.getElementById('event-title').value = ev.title;
+      document.getElementById('event-description').value = ev.description || '';
+      document.getElementById('event-allday').value = ev.allDay ? 'allday' : 'timed';
+      document.getElementById('event-recurrence').value = ev.recurrence || 'none';
+      selectedTagId = ev.tagId || null;
+
+      if (ev.allDay) {
+        document.getElementById('event-start-date').value = ev.start.split('T')[0];
+        document.getElementById('event-end-date').value = ev.end ? ev.end.split('T')[0] : '';
+      } else {
+        document.getElementById('event-start-datetime').value = ev.start;
+        document.getElementById('event-end-datetime').value = ev.end || '';
+      }
+
+      // Recréer les lignes de rappels existants
+      document.getElementById('reminders-list').innerHTML = '';
+      (ev.reminders || []).forEach(r => addReminderRow(r.value, r.unit));
+
+      toggleAllDay();
+      renderTagList();
+      document.getElementById('overlay-event').classList.add('active');
+    }
+
+    // =====================
+    // FERMER LA MODALE ÉVÉNEMENT
+    // =====================
+    function closeEventModal() {
+      document.getElementById('overlay-event').classList.remove('active');
+    }
+
+    // =====================
+    // BASCULER ENTRE "JOURNÉE PLEINE" ET "CRÉNEAU HORAIRE"
+    // =====================
+    function toggleAllDay() {
+      const isAllDay = document.getElementById('event-allday').value === 'allday';
+      document.getElementById('allday-fields').style.display = isAllDay ? 'block' : 'none';
+      document.getElementById('timed-fields').style.display = isAllDay ? 'none' : 'block';
+    }
+
+    // =====================
+    // ENREGISTRER UN ÉVÉNEMENT (création ou modification)
+    // =====================
+    function saveEvent() {
+      const title = document.getElementById('event-title').value.trim();
+      if (!title) { alert('Le titre est obligatoire.'); return; }
+
+      const isAllDay = document.getElementById('event-allday').value === 'allday';
+      let start, end;
+
+      if (isAllDay) {
+        start = document.getElementById('event-start-date').value;
+        end = document.getElementById('event-end-date').value || null;
+        if (!start) { alert('La date de début est obligatoire.'); return; }
+      } else {
+        start = document.getElementById('event-start-datetime').value;
+        end = document.getElementById('event-end-datetime').value || null;
+        if (!start) { alert('La date/heure de début est obligatoire.'); return; }
+      }
+
+      // Récupérer les rappels saisis
+      const reminders = [];
+      document.querySelectorAll('.reminder-row').forEach(row => {
+        const val = row.querySelector('input').value;
+        const unit = row.querySelector('select').value;
+        if (val) reminders.push({ value: parseInt(val), unit });
+      });
+
+      // Construire l'objet événement
+      const eventData = {
+        id: editingEventId || Date.now().toString(),
+        title,
+        description: document.getElementById('event-description').value.trim(),
+        start,
+        end,
+        allDay: isAllDay,
+        recurrence: document.getElementById('event-recurrence').value,
+        tagId: selectedTagId || null,
+        reminders
+      };
+
+      if (editingEventId) {
+        // Mise à jour d'un événement existant
+        const idx = events.findIndex(e => e.id === editingEventId);
+        events[idx] = eventData;
+      } else {
+        // Ajout d'un nouvel événement
+        events.push(eventData);
+      }
+
+      // Sauvegarder dans localStorage
+      localStorage.setItem('calendapp_events', JSON.stringify(events));
+
+      // Mettre à jour le calendrier affiché
+      refreshCalendar();
+      closeEventModal();
+    }
+
+    // =====================
+    // RAFRAÎCHIR LE CALENDRIER APRÈS UNE MODIFICATION
+    // =====================
+    function refreshCalendar() {
+      calendar.removeAllEvents();
+      calendar.addEventSource(getCalendarEvents());
+    }
+
+    // =====================
+    // AFFICHER LA LISTE DES TAGS DANS LA MODALE ÉVÉNEMENT
+    // =====================
+    function renderTagList() {
+      const container = document.getElementById('tag-list');
+      container.innerHTML = '';
+
+      tags.forEach(tag => {
+        const chip = document.createElement('span');
+        chip.className = 'tag-chip' + (selectedTagId === tag.id ? ' selected' : '');
+        chip.style.backgroundColor = tag.color;
+        chip.textContent = tag.name;
+        chip.onclick = () => {
+          selectedTagId = (selectedTagId === tag.id) ? null : tag.id;
+          renderTagList();
+        };
+        container.appendChild(chip);
+      });
+
+      // Bouton pour créer un nouveau tag
+      const btn = document.createElement('button');
+      btn.id = 'btn-new-tag';
+      btn.textContent = '+ Nouveau tag';
+      btn.onclick = openTagModal;
+      container.appendChild(btn);
+    }
+
+    // =====================
+    // AJOUTER UNE LIGNE DE RAPPEL
+    // value et unit pré-remplis si modification d'un événement existant
+    // =====================
+    function addReminderRow(value = '', unit = 'minutes') {
+      const row = document.createElement('div');
+      row.className = 'reminder-row';
+      row.innerHTML = `
+        <input type="number" min="1" placeholder="Ex: 30" value="${value}" />
+        <select>
+          <option value="minutes" ${unit === 'minutes' ? 'selected' : ''}>minutes avant</option>
+          <option value="hours" ${unit === 'hours' ? 'selected' : ''}>heures avant</option>
+          <option value="days" ${unit === 'days' ? 'selected' : ''}>jours avant</option>
+        </select>
+        <button class="btn-remove-reminder" onclick="this.parentElement.remove()">✕</button>
+      `;
+      document.getElementById('reminders-list').appendChild(row);
+    }
+
+    // =====================
+    // MODALE TAG : OUVRIR
+    // =====================
+    function openTagModal() {
+      selectedColor = null;
+      document.getElementById('tag-name').value = '';
+      document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+      document.getElementById('overlay-tag').classList.add('active');
+    }
+
+    // =====================
+    // MODALE TAG : FERMER
+    // =====================
+    function closeTagModal() {
+      document.getElementById('overlay-tag').classList.remove('active');
+    }
+
+    // =====================
+    // MODALE TAG : AFFICHER LA GRILLE DE COULEURS
+    // =====================
+    function renderColorGrid() {
+      const grid = document.getElementById('color-grid');
+      grid.innerHTML = '';
+      COLORS.forEach(c => {
+        const dot = document.createElement('div');
+        dot.className = 'color-dot';
+        dot.style.backgroundColor = c.hex;
+        // Bordure noire pour les couleurs claires (blanc, jaune, gris clair)
+        if (['white', 'yellow', 'lightgray'].includes(c.id)) {
+          dot.style.border = '3px solid #bbb';
+        }
+        dot.title = c.label;
+        dot.onclick = () => {
+          document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+          dot.classList.add('selected');
+          selectedColor = c.hex;
+        };
+        grid.appendChild(dot);
+      });
+    }
+
+    // =====================
+    // MODALE TAG : ENREGISTRER UN NOUVEAU TAG
+    // =====================
+    function saveTag() {
+      const name = document.getElementById('tag-name').value.trim();
+      if (!name) { alert('Le nom du tag est obligatoire (min. 1 caractère).'); return; }
+      if (!selectedColor) { alert('Veuillez choisir une couleur.'); return; }
+
+      const newTag = {
+        id: Date.now().toString(),
+        name,
+        color: selectedColor
+      };
+
+      tags.push(newTag);
+      localStorage.setItem('calendapp_tags', JSON.stringify(tags));
+
+      // Sélectionner automatiquement le tag qu'on vient de créer
+      selectedTagId = newTag.id;
+
+      closeTagModal();
+      renderTagList();
+    }
+
+    // =====================
+    // CONNEXION GOOGLE OAUTH
+    // Demande l'accès à Google Calendar de l'utilisateur
+    // =====================
+    function loginWithGoogle() {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (response) => {
+          if (response.access_token) {
+            googleAccessToken = response.access_token;
+            fetchGoogleCalendarEvents();
+          }
+        }
+      });
+      client.requestAccessToken();
+    }
+
+    // =====================
+    // RÉCUPÉRER LES ÉVÉNEMENTS GOOGLE CALENDAR
+    // Appelle l'API Google Calendar avec le token OAuth
+    // =====================
+    function fetchGoogleCalendarEvents() {
+      const now = new Date().toISOString();
+      // Récupère les événements des 6 prochains mois
+      const sixMonths = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString();
+
+      fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${now}&timeMax=${sixMonths}&singleEvents=true&orderBy=startTime`, {
+        headers: { Authorization: `Bearer ${googleAccessToken}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.items) {
+          // Convertir les événements Google au format interne
+          const googleEvents = data.items.map(item => ({
+            id: 'google_' + item.id,
+            title: item.summary || '(Sans titre)',
+            description: item.description || '',
+            start: item.start.dateTime || item.start.date,
+            end: item.end.dateTime || item.end.date || null,
+            allDay: !!item.start.date,
+            recurrence: 'none',
+            tagId: null,
+            reminders: [],
+            fromGoogle: true // Marqueur pour identifier les événements importés
+          }));
+
+          // Fusionner avec les événements locaux (éviter les doublons)
+          const localEvents = events.filter(e => !e.fromGoogle);
+          events = [...localEvents, ...googleEvents];
+          localStorage.setItem('calendapp_events', JSON.stringify(events));
+          refreshCalendar();
+
+          // Afficher le nom de l'utilisateur
+          fetchUserInfo();
+        }
+      })
+      .catch(err => console.error('Erreur Google Calendar:', err));
+    }
+
+    // =====================
+    // RÉCUPÉRER LE PROFIL GOOGLE DE L'UTILISATEUR
+    // Pour afficher son prénom dans la barre du haut
+    // =====================
+    function fetchUserInfo() {
+      fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${googleAccessToken}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('btn-login').style.display = 'none';
+        document.getElementById('user-info').style.display = 'inline';
+        document.getElementById('user-info').textContent = `👤 ${data.given_name || data.email}`;
+      });
+    }
+
+  </script>
 </body>
 </html>
