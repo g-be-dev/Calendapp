@@ -1,0 +1,30 @@
+name: Auto increment version
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Bump version in index.html
+        run: |
+          # Lit la version actuelle depuis index.html
+          CURRENT=$(grep -oP 'v0\.\K[0-9]+' docs/index.html | head -1)
+          # Si pas trouvée, démarre à 3
+          CURRENT=${CURRENT:-3}
+          # Incrémente
+          NEW=$((CURRENT + 1))
+          # Remplace dans le fichier
+          sed -i "s/v0\.$CURRENT/v0.$NEW/g" index.html
+
+      - name: Commit updated version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add index.html
+          git commit -m "chore: bump version" || echo "No changes"
+          git push
