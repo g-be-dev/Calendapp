@@ -411,9 +411,12 @@
       padding: 12px;
       max-width: 900px;
       margin: 0 auto;
+      box-sizing: border-box;
     }
 
     /* Adaptation FullCalendar aux variables de thème */
+    /* Hauteur calendrier = viewport moins header (52px) et sélecteur de vue (46px) */
+    #calendar {  height: calc(100vh - 52px - 46px - 16px);}
     .fc { color: var(--text); }
     .fc-toolbar-title { color: var(--text); font-weight: 700; text-transform: capitalize; }
     .fc-button { background: var(--primary) !important; border-color: var(--primary) !important; }
@@ -771,7 +774,7 @@
       #user-info { display: none !important; }
       #btn-burger { display: block; }
       #topbar h1 { font-size: 1rem; }
-      #calendar-container { padding: 6px; }
+      #calendar-container { padding: 8px; }
       .modal { width: 96%; padding: 16px; border-radius: 10px; }
       #view-selector button { padding: 4px 10px; font-size: 0.78rem; }
       .spinner { width: 26px; font-size: 0.9rem; }
@@ -1241,16 +1244,19 @@
       buildDateOnlyFields('recurrence-end-selects', now);
 
       const calendarEl = document.getElementById('calendar');
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        locale: 'fr',
-        initialView: localStorage.getItem('calendapp_view') || 'dayGridMonth',
-        height: 'auto',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
-        titleFormat: { year: 'numeric', month: 'long' },
-        dateClick: function(info) { openEventModal(info.dateStr); },
-        eventClick: function(info) { openEditEventModal(info.event); },
-        events: getCalendarEvents()
-      });
+     calendar = new FullCalendar.Calendar(calendarEl, {
+      locale: 'fr',
+      initialView: localStorage.getItem('calendapp_view') || 'dayGridMonth',
+      height: '100%',
+      contentHeight: '100%',
+      headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+      titleFormat: { year: 'numeric', month: 'long' },
+      dayMinWidth: 0,
+      eventMinHeight: 14,
+      dateClick: function(info) { openEventModal(info.dateStr); },
+      eventClick: function(info) { openEditEventModal(info.event); },
+      events: getCalendarEvents()
+    });
 
       calendar.render();
 
