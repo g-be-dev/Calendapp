@@ -416,7 +416,7 @@
 
     /* Adaptation FullCalendar aux variables de thème */
     /* Hauteur calendrier = viewport moins header (52px) et sélecteur de vue (46px) */
-    #calendar {  height: calc(100vh - 52px - 46px - 16px);}
+    #calendar {    height: calc(100vh - 106px);}
     .fc { color: var(--text); }
     .fc-toolbar-title { color: var(--text); font-weight: 700; text-transform: capitalize; }
     .fc-button { background: var(--primary) !important; border-color: var(--primary) !important; }
@@ -1247,15 +1247,16 @@
      calendar = new FullCalendar.Calendar(calendarEl, {
       locale: 'fr',
       initialView: localStorage.getItem('calendapp_view') || 'dayGridMonth',
-      height: '100%',
-      contentHeight: '100%',
+      height: 'calc(100vh - 106px)',
       headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
       titleFormat: { year: 'numeric', month: 'long' },
+       allDayText: 'Journée',
       dayMinWidth: 0,
       eventMinHeight: 14,
       dateClick: function(info) { openEventModal(info.dateStr); },
       eventClick: function(info) { openEditEventModal(info.event); },
-      events: getCalendarEvents()
+      events: getCalendarEvents(),
+       
     });
 
       calendar.render();
