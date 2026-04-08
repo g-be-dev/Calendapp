@@ -18,18 +18,10 @@
 
   <style>
     /* =====================
-       POLICE
-       SF Pro sur Apple, puis fallback système proche
-    ===================== */
-    body {
-      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue',
-                   'Segoe UI', system-ui, sans-serif;
-    }
-
-    /* =====================
        VARIABLES CSS
+       Breakpoints stockés en variables pour éviter les valeurs en dur
        Mode clair : palette personnalisée
-       Mode sombre : palette sombre conservée
+       Mode sombre : palette sombre
     ===================== */
     :root {
       --bg: #f0f8f5;
@@ -42,10 +34,14 @@
       --primary-light: #c8ece2;
       --danger: #e53935;
       --shadow: rgba(4,61,110,0.12);
-      --overlay-bg: rgba(4,61,110,0.35);
+      --overlay-bg: rgba(0,0,0,0.5); /* 50% noir sur toutes les modales */
       --input-bg: #ffffff;
       --chip-bg: #c8ece2;
       --topbar-text: #ffffff;
+
+      /* Breakpoints : référence centralisée */
+      --bp-mobile: 600px;
+      --bp-tablet: 1024px;
     }
 
     [data-theme="dark"] {
@@ -66,11 +62,13 @@
     }
 
     /* =====================
-       RESET & BASE
+       POLICE : SF Pro si dispo (Apple), sinon fallback système
     ===================== */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text',
+                   'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
       transition: background 0.3s, color 0.3s;
@@ -87,6 +85,8 @@
       color: var(--topbar-text);
       padding: 10px 16px;
       gap: 10px;
+      position: relative;
+      z-index: 300;
     }
 
     #topbar h1 {
@@ -103,7 +103,7 @@
     }
 
     /* =====================
-       CONTRÔLES DE THÈME
+       CONTRÔLES THÈME (desktop uniquement)
     ===================== */
     #theme-controls {
       display: flex;
@@ -158,7 +158,7 @@
     #theme-auto-label input { cursor: pointer; }
 
     /* =====================
-       BOUTON CONNEXION
+       BOUTON CONNEXION (desktop uniquement)
     ===================== */
     #btn-login {
       background: white;
@@ -169,11 +169,214 @@
       font-weight: 700;
       cursor: pointer;
       font-size: 0.85rem;
+      font-family: inherit;
       white-space: nowrap;
     }
 
     #btn-login:hover { background: var(--primary-light); }
     #user-info { font-size: 0.8rem; opacity: 0.9; white-space: nowrap; }
+
+    /* =====================
+       BOUTON BURGER (mobile + tablette uniquement)
+       Masqué sur desktop via media query
+    ===================== */
+    #btn-burger {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.6rem;
+      cursor: pointer;
+      padding: 2px 4px;
+      line-height: 1;
+    }
+
+    /* =====================
+       OVERLAY BURGER (fond sombre derrière le menu)
+    ===================== */
+    #burger-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 400;
+    }
+
+    #burger-overlay.active { display: block; }
+
+    /* =====================
+       MENU BURGER
+       Slide depuis la droite, z-index au-dessus de l'overlay
+    ===================== */
+    #burger-menu {
+      position: fixed;
+      top: 0;
+      right: -300px; /* hors écran par défaut */
+      width: 280px;
+      height: 100vh;
+      background: var(--surface);
+      z-index: 500;
+      box-shadow: -4px 0 24px var(--shadow);
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #burger-menu.open { right: 0; }
+
+    #burger-menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--primary);
+      color: white;
+    }
+
+    #burger-menu-header span { font-weight: 700; font-size: 1rem; }
+
+    #btn-close-burger {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+
+    /* Entrées du menu burger */
+    .burger-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 20px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      color: var(--text);
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: background 0.15s;
+    }
+
+    .burger-item:hover { background: var(--primary-light); }
+    .burger-icon { font-size: 1.1rem; width: 24px; text-align: center; }
+
+    /* Section thème dans le burger */
+    #burger-theme-section {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #burger-theme-section > label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 10px;
+    }
+
+    #burger-theme-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Toggle thème dans le burger : couleurs adaptées au fond clair/sombre */
+    .toggle-switch-burger .toggle-slider { background: var(--border); }
+    .toggle-switch-burger input:checked + .toggle-slider { background: var(--primary); }
+    .toggle-switch-burger .toggle-slider:before { background: white; }
+
+    #burger-auto-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    /* =====================
+       ÉCRAN DE DÉCONNEXION
+       Remplace tout le contenu quand l'utilisateur est déconnecté
+    ===================== */
+    #disconnected-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: calc(100vh - 52px);
+      gap: 20px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    #disconnected-screen p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+
+    #btn-connect-center {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px var(--shadow);
+      transition: background 0.2s;
+    }
+
+    #btn-connect-center:hover { background: var(--primary-dark); }
+
+    /* =====================
+       PAGE ROUTINES (placeholder avec image dino)
+    ===================== */
+    #routines-page {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 52px);
+      padding: 24px;
+      text-align: center;
+      gap: 20px;
+    }
+
+    #routines-page img {
+      max-width: 320px;
+      width: 85%;
+      border-radius: 12px;
+    }
+
+    #btn-back-calendar {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #btn-back-calendar:hover { background: var(--primary-dark); }
+
+    /* =====================
+       VUE PRINCIPALE (calendrier)
+    ===================== */
+    #main-view { display: block; }
 
     /* =====================
        SÉLECTEUR DE VUE
@@ -199,10 +402,7 @@
       transition: all 0.2s;
     }
 
-    #view-selector button.active {
-      background: var(--primary);
-      color: white;
-    }
+    #view-selector button.active { background: var(--primary); color: white; }
 
     /* =====================
        CALENDRIER
@@ -213,6 +413,7 @@
       margin: 0 auto;
     }
 
+    /* Adaptation FullCalendar aux variables de thème */
     .fc { color: var(--text); }
     .fc-toolbar-title { color: var(--text); font-weight: 700; text-transform: capitalize; }
     .fc-button { background: var(--primary) !important; border-color: var(--primary) !important; }
@@ -239,12 +440,15 @@
       box-shadow: 0 4px 12px var(--shadow);
       z-index: 100;
       transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     #btn-add-event:hover { background: var(--primary-dark); }
 
     /* =====================
-       OVERLAY
+       OVERLAY MODALES (50% noir)
     ===================== */
     .overlay {
       display: none;
@@ -311,16 +515,12 @@
 
     .form-group input[type="text"]:focus,
     .form-group textarea:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
+    .form-group select:focus { outline: none; border-color: var(--primary); }
 
     .form-group textarea { resize: vertical; min-height: 70px; }
 
     /* =====================
        TOGGLE TYPE D'ÉVÉNEMENT
-       Journée entière / Créneau horaire
     ===================== */
     .type-toggle {
       display: flex;
@@ -342,19 +542,11 @@
       transition: all 0.2s;
     }
 
-    /* Séparateur entre les deux boutons du toggle */
-    .type-toggle button:first-child {
-      border-right: 1.5px solid var(--primary);
-    }
-
-    .type-toggle button.active {
-      background: var(--primary);
-      color: white;
-    }
+    .type-toggle button:first-child { border-right: 1.5px solid var(--primary); }
+    .type-toggle button.active { background: var(--primary); color: white; }
 
     /* =====================
-       CHAMPS DATETIME CUSTOM
-       Ordre : HH:MM puis JJ/MM/AAAA
+       CHAMPS DATETIME CUSTOM (HH:MM + JJ/MMM/AAAA)
     ===================== */
     .datetime-custom {
       display: flex;
@@ -363,7 +555,6 @@
       flex-wrap: wrap;
     }
 
-    /* Conteneur heure + minutes avec scroll infini */
     .time-spinners {
       display: flex;
       align-items: center;
@@ -374,8 +565,7 @@
       padding: 4px 8px;
     }
 
-    /* Chaque spinner (heure ou minute) :
-       scroll up = +1, scroll down = -1, boucle infinie */
+    /* Spinner heure/minute : scroll infini */
     .spinner {
       width: 32px;
       text-align: center;
@@ -390,21 +580,15 @@
     }
 
     .spinner:focus { outline: none; }
+    .time-separator { font-weight: 700; color: var(--text); font-size: 1rem; }
 
-    .time-separator {
-      font-weight: 700;
-      color: var(--text);
-      font-size: 1rem;
-    }
-
-    /* Selects natifs pour jour, mois, année */
-    .date-selects {
+    .date-selects, .date-only-selects {
       display: flex;
       gap: 4px;
       align-items: center;
     }
 
-    .date-selects select {
+    .date-selects select, .date-only-selects select {
       padding: 6px 4px;
       border: 1.5px solid var(--border);
       border-radius: 8px;
@@ -415,27 +599,9 @@
       cursor: pointer;
     }
 
-    .date-selects select:focus {
+    .date-selects select:focus, .date-only-selects select:focus {
       outline: none;
       border-color: var(--primary);
-    }
-
-    /* Champs de date simple (sans heure) pour journée entière */
-    .date-only-selects {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .date-only-selects select {
-      padding: 6px 4px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      background: var(--input-bg);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 0.9rem;
-      cursor: pointer;
     }
 
     /* =====================
@@ -450,11 +616,7 @@
       gap: 8px;
     }
 
-    .modal-actions-right {
-      display: flex;
-      gap: 8px;
-      margin-left: auto;
-    }
+    .modal-actions-right { display: flex; gap: 8px; margin-left: auto; }
 
     .btn-cancel {
       background: var(--chip-bg);
@@ -498,12 +660,7 @@
     /* =====================
        TAGS
     ===================== */
-    #tag-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 6px;
-    }
+    #tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 
     .tag-chip {
       display: inline-flex;
@@ -532,14 +689,9 @@
     }
 
     /* =====================
-       GRILLE DE COULEURS
+       GRILLE COULEURS
     ===================== */
-    #color-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin: 10px 0;
-    }
+    #color-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
 
     .color-dot {
       width: 30px;
@@ -556,18 +708,9 @@
     /* =====================
        RAPPELS
     ===================== */
-    #reminders-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 6px;
-    }
+    #reminders-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
 
-    .reminder-row {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
+    .reminder-row { display: flex; gap: 6px; align-items: center; }
 
     .reminder-row input[type="number"] {
       width: 70px;
@@ -617,30 +760,58 @@
     #overlay-confirm .modal { max-width: 360px; text-align: center; }
     #overlay-confirm h2 { color: var(--danger); }
     #overlay-confirm p { margin: 12px 0 20px; color: var(--text-secondary); font-size: 0.95rem; }
+    #confirm-actions { display: flex; flex-direction: column; gap: 10px; }
 
-    #confirm-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* =====================
+       RESPONSIVE : MOBILE (≤ 600px)
+    ===================== */
+    @media (max-width: 600px) {
+      #theme-controls { display: none; }
+      #btn-login { display: none; }
+      #user-info { display: none !important; }
+      #btn-burger { display: block; }
+      #topbar h1 { font-size: 1rem; }
+      #calendar-container { padding: 6px; }
+      .modal { width: 96%; padding: 16px; border-radius: 10px; }
+      #view-selector button { padding: 4px 10px; font-size: 0.78rem; }
+      .spinner { width: 26px; font-size: 0.9rem; }
+      .date-selects select, .date-only-selects select { font-size: 0.82rem; padding: 5px 3px; }
     }
 
     /* =====================
-       RESPONSIVE
+       RESPONSIVE : TABLETTE (601px - 1024px)
     ===================== */
-    @media (max-width: 600px) {
-      #topbar h1 { font-size: 0.95rem; }
-      .modal { padding: 16px; }
-      #theme-auto-label span { display: none; }
-      .datetime-custom { gap: 4px; }
+    @media (min-width: 601px) and (max-width: 1024px) {
+      #theme-controls { display: none; }
+      #btn-login { display: none; }
+      #user-info { display: none !important; }
+      #btn-burger { display: block; }
+      #topbar h1 { font-size: 1rem; }
+      #calendar-container { padding: 10px; }
+    }
+
+    /* =====================
+       RESPONSIVE : DESKTOP (> 1024px)
+       Burger masqué, contrôles desktop visibles
+    ===================== */
+    @media (min-width: 1025px) {
+      #btn-burger { display: none; }
+      #theme-controls { display: flex; }
+      #burger-menu { display: none !important; }
+      #burger-overlay { display: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <!-- BARRE DU HAUT -->
+  <!-- =====================
+       BARRE DU HAUT
+  ===================== -->
   <div id="topbar">
-<h1>📅 Calendapp <span style="font-size:0.7rem; opacity:0.75; font-weight:400;">v0.07</span></h1>
+    <h1>📅 Calendapp <span style="font-size:0.7rem; opacity:0.75; font-weight:400;">v0.03</span></h1>
     <div id="topbar-right">
+
+      <!-- Contrôles thème + connexion (desktop uniquement) -->
       <div id="theme-controls">
         <span id="theme-icon">☀️</span>
         <label class="toggle-switch" title="Mode sombre / clair">
@@ -654,25 +825,93 @@
       </div>
       <button id="btn-login" onclick="loginWithGoogle()">Connexion Google</button>
       <span id="user-info" style="display:none;"></span>
+
+      <!-- Bouton burger (mobile + tablette uniquement) -->
+      <button id="btn-burger" onclick="openBurger()" aria-label="Menu">☰</button>
     </div>
   </div>
 
-  <!-- SÉLECTEUR DE VUE -->
-  <div id="view-selector">
-    <button onclick="changeView('dayGridMonth')" class="active" id="btn-month">Mois</button>
-    <button onclick="changeView('timeGridWeek')" id="btn-week">Semaine</button>
-    <button onclick="changeView('timeGridDay')" id="btn-day">Jour</button>
+  <!-- =====================
+       OVERLAY BURGER
+  ===================== -->
+  <div id="burger-overlay" onclick="closeBurger()"></div>
+
+  <!-- =====================
+       MENU BURGER (slide depuis la droite)
+  ===================== -->
+  <div id="burger-menu">
+    <div id="burger-menu-header">
+      <span>Menu</span>
+      <button id="btn-close-burger" onclick="closeBurger()">✕</button>
+    </div>
+
+    <!-- Entrée 1 : Se connecter / Se déconnecter -->
+    <button class="burger-item" id="burger-auth-btn" onclick="burgerAuthAction()">
+      <span class="burger-icon" id="burger-auth-icon">🔑</span>
+      <span id="burger-auth-label">Se connecter</span>
+    </button>
+
+    <!-- Entrée 2 : Routines -->
+    <button class="burger-item" onclick="openRoutines()">
+      <span class="burger-icon">🔁</span>
+      <span>Routines</span>
+    </button>
+
+    <!-- Entrée 3 : Thème -->
+    <div id="burger-theme-section">
+      <label>Thème</label>
+      <div id="burger-theme-controls">
+        <span id="burger-theme-icon">☀️</span>
+        <label class="toggle-switch toggle-switch-burger" title="Mode sombre / clair">
+          <input type="checkbox" id="burger-toggle-dark" onchange="onBurgerThemeToggle()" />
+          <span class="toggle-slider"></span>
+        </label>
+        <label id="burger-auto-label" title="Suivre le mode de l'appareil">
+          <input type="checkbox" id="burger-check-auto-theme" onchange="onBurgerAutoThemeChange()" />
+          <span style="font-size:0.82rem; color:var(--text-secondary);">Auto</span>
+        </label>
+      </div>
+    </div>
   </div>
 
-  <!-- CALENDRIER -->
-  <div id="calendar-container">
-    <div id="calendar"></div>
+  <!-- =====================
+       PAGE ROUTINES (placeholder)
+  ===================== -->
+  <div id="routines-page">
+    <img src="Dino_placeholder.png" alt="Page en construction" />
+    <button id="btn-back-calendar" onclick="closeRoutines()">← Retour au calendrier</button>
   </div>
 
+  <!-- =====================
+       ÉCRAN DE DÉCONNEXION
+       Affiché uniquement après logout, remplace tout le contenu
+  ===================== -->
+  <div id="disconnected-screen">
+    <p>Connecte-toi pour accéder à ton calendrier et synchroniser tes événements.</p>
+    <button id="btn-connect-center" onclick="loginWithGoogle()">🔑 Se connecter avec Google</button>
+  </div>
+
+  <!-- =====================
+       VUE PRINCIPALE (calendrier + sélecteur de vue)
+  ===================== -->
+  <div id="main-view">
+    <div id="view-selector">
+      <button onclick="changeView('dayGridMonth')" id="btn-month">Mois</button>
+      <button onclick="changeView('timeGridWeek')" id="btn-week">Semaine</button>
+      <button onclick="changeView('timeGridDay')" id="btn-day">Jour</button>
+    </div>
+    <div id="calendar-container">
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <!-- Bouton flottant ajout événement -->
   <button id="btn-add-event" onclick="openEventModal()" title="Ajouter un événement">+</button>
 
 
-  <!-- MODALE : CRÉER / MODIFIER UN ÉVÉNEMENT -->
+  <!-- =====================
+       MODALE : CRÉER / MODIFIER UN ÉVÉNEMENT
+  ===================== -->
   <div class="overlay" id="overlay-event">
     <div class="modal">
       <h2 id="modal-event-title">Nouvel événement</h2>
@@ -687,7 +926,7 @@
         <textarea id="event-description" placeholder="Notes, détails..."></textarea>
       </div>
 
-      <!-- Toggle type d'événement : Créneau horaire actif par défaut -->
+      <!-- Toggle type : Créneau horaire par défaut -->
       <div class="form-group">
         <label>Type</label>
         <div class="type-toggle">
@@ -696,10 +935,8 @@
         </div>
       </div>
 
-      <!-- CHAMPS CRÉNEAU HORAIRE -->
+      <!-- Champs créneau horaire -->
       <div id="timed-fields">
-
-        <!-- Durée prédéfinie : auto-calcule la fin -->
         <div class="form-group">
           <label>Durée (optionnel)</label>
           <select id="event-duration" onchange="applyDuration()">
@@ -711,20 +948,13 @@
             <option value="60">1 heure</option>
           </select>
         </div>
-
         <div class="form-group">
           <label>Début *</label>
-          <!-- Ordre : HH:MM puis JJ/MM/AAAA -->
           <div class="datetime-custom">
-            <div class="time-spinners" id="start-time-spinners">
-              <!-- Les spinners heure/minute sont générés en JS -->
-            </div>
-            <div class="date-selects" id="start-date-selects">
-              <!-- Les selects jour/mois/année sont générés en JS -->
-            </div>
+            <div class="time-spinners" id="start-time-spinners"></div>
+            <div class="date-selects" id="start-date-selects"></div>
           </div>
         </div>
-
         <div class="form-group">
           <label>Fin *</label>
           <div class="datetime-custom">
@@ -732,10 +962,9 @@
             <div class="date-selects" id="end-date-selects"></div>
           </div>
         </div>
-
       </div>
 
-      <!-- CHAMPS JOURNÉE ENTIÈRE -->
+      <!-- Champs journée entière -->
       <div id="allday-fields" style="display:none;">
         <div class="form-group">
           <label>Date de début *</label>
@@ -791,7 +1020,9 @@
   </div>
 
 
-  <!-- MODALE : CONFIRMATION SUPPRESSION -->
+  <!-- =====================
+       MODALE : CONFIRMATION SUPPRESSION
+  ===================== -->
   <div class="overlay" id="overlay-confirm">
     <div class="modal">
       <h2>🗑 Supprimer</h2>
@@ -805,7 +1036,9 @@
   </div>
 
 
-  <!-- MODALE : CRÉER UN TAG -->
+  <!-- =====================
+       MODALE : CRÉER UN TAG
+  ===================== -->
   <div class="overlay" id="overlay-tag">
     <div class="modal">
       <h2>Nouveau tag</h2>
@@ -845,7 +1078,7 @@
     let editingEventId = null;
     let googleAccessToken = null;
     let calendar = null;
-    let currentEventType = 'timed'; // 'timed' ou 'allday' — créneau par défaut
+    let currentEventType = 'timed'; // créneau horaire par défaut
 
     // =====================
     // COULEURS DES TAGS
@@ -871,12 +1104,10 @@
     // =====================
     const pad = n => String(n).padStart(2, '0');
 
-    // Retourne les jours d'un mois donné
     function daysInMonth(month, year) {
       return new Date(year, month, 0).getDate();
     }
 
-    // Génère les options <option> pour un select
     function buildOptions(min, max, selected, labelFn) {
       let html = '';
       for (let i = min; i <= max; i++) {
@@ -886,107 +1117,77 @@
       return html;
     }
 
-    // Noms des mois en français
-const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+    const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
 
     // =====================
-    // CRÉER UN BLOC DATETIME CUSTOM (HH:MM + JJ/MM/AAAA)
-    // prefix : 'start' ou 'end' pour identifier les champs
-    // initDate : objet Date optionnel pour pré-remplir
+    // CONSTRUCTION DES CHAMPS DATETIME CUSTOM (HH:MM + JJ/MMM/AAAA)
     // =====================
     function buildDatetimeFields(timeContainerId, dateContainerId, initDate) {
       const now = initDate || new Date();
-      const h = now.getHours();
-      const m = now.getMinutes();
-      const d = now.getDate();
-      const mo = now.getMonth() + 1;
-      const y = now.getFullYear();
+      const h = now.getHours(), m = now.getMinutes();
+      const d = now.getDate(), mo = now.getMonth() + 1, y = now.getFullYear();
 
-      // --- SPINNERS HEURE / MINUTE ---
-      // Chaque spinner est un <span> éditable au scroll (boucle infinie)
       const timeContainer = document.getElementById(timeContainerId);
       timeContainer.innerHTML = `
         <span class="spinner" id="${timeContainerId}-h" data-type="hour">${pad(h)}</span>
         <span class="time-separator">:</span>
         <span class="spinner" id="${timeContainerId}-m" data-type="minute">${pad(m)}</span>
       `;
+      timeContainer.querySelectorAll('.spinner').forEach(attachSpinnerScroll);
 
-      // Attacher les événements scroll sur chaque spinner
-      timeContainer.querySelectorAll('.spinner').forEach(spinner => {
-        attachSpinnerScroll(spinner);
-      });
-
-      // --- SELECTS DATE : JJ / MMM / AAAA ---
       const dateContainer = document.getElementById(dateContainerId);
-      const yearOptions = buildOptions(y - 1, y + 5, y);
       dateContainer.innerHTML = `
         <select id="${dateContainerId}-d" onchange="onDateSelectChange('${dateContainerId}')">${buildOptions(1, daysInMonth(mo, y), d)}</select>
         <select id="${dateContainerId}-mo" onchange="onDateSelectChange('${dateContainerId}')">${buildOptions(1, 12, mo, i => MOIS[i-1])}</select>
-        <select id="${dateContainerId}-y" onchange="onDateSelectChange('${dateContainerId}')">${yearOptions}</select>
+        <select id="${dateContainerId}-y" onchange="onDateSelectChange('${dateContainerId}')">${buildOptions(y - 1, y + 5, y)}</select>
       `;
     }
 
     // =====================
-    // CRÉER UN BLOC DATE SEULE (JJ/MMM/AAAA) pour journée entière
+    // CONSTRUCTION DES CHAMPS DATE SEULE (JJ/MMM/AAAA)
     // =====================
     function buildDateOnlyFields(containerId, initDate) {
       const now = initDate || new Date();
-      const d = now.getDate();
-      const mo = now.getMonth() + 1;
-      const y = now.getFullYear();
-      const yearOptions = buildOptions(y - 1, y + 5, y);
+      const d = now.getDate(), mo = now.getMonth() + 1, y = now.getFullYear();
       const container = document.getElementById(containerId);
       container.innerHTML = `
         <select id="${containerId}-d">${buildOptions(1, daysInMonth(mo, y), d)}</select>
         <select id="${containerId}-mo" onchange="onDateOnlySelectChange('${containerId}')">${buildOptions(1, 12, mo, i => MOIS[i-1])}</select>
-        <select id="${containerId}-y" onchange="onDateOnlySelectChange('${containerId}')">${yearOptions}</select>
+        <select id="${containerId}-y" onchange="onDateOnlySelectChange('${containerId}')">${buildOptions(y - 1, y + 5, y)}</select>
       `;
     }
 
-    // Recalcule les jours disponibles quand le mois ou l'année change (selects date seule)
     function onDateOnlySelectChange(containerId) {
       const mo = parseInt(document.getElementById(`${containerId}-mo`).value);
       const y = parseInt(document.getElementById(`${containerId}-y`).value);
       const dSel = document.getElementById(`${containerId}-d`);
-      const currentDay = parseInt(dSel.value);
       const maxDay = daysInMonth(mo, y);
-      dSel.innerHTML = buildOptions(1, maxDay, Math.min(currentDay, maxDay));
+      dSel.innerHTML = buildOptions(1, maxDay, Math.min(parseInt(dSel.value), maxDay));
     }
 
-    // Même chose pour les selects dans un bloc datetime
     function onDateSelectChange(dateContainerId) {
       const mo = parseInt(document.getElementById(`${dateContainerId}-mo`).value);
       const y = parseInt(document.getElementById(`${dateContainerId}-y`).value);
       const dSel = document.getElementById(`${dateContainerId}-d`);
-      const currentDay = parseInt(dSel.value);
       const maxDay = daysInMonth(mo, y);
-      dSel.innerHTML = buildOptions(1, maxDay, Math.min(currentDay, maxDay));
+      dSel.innerHTML = buildOptions(1, maxDay, Math.min(parseInt(dSel.value), maxDay));
     }
 
     // =====================
-    // SCROLL INFINI SUR LES SPINNERS HEURE / MINUTE
-    // Scroll up = +1, scroll down = -1, boucle infinie
+    // SCROLL INFINI HEURE / MINUTE
+    // Scroll up = +1, scroll down = -1, boucle à 24h et 60min
     // =====================
     function attachSpinnerScroll(spinner) {
       spinner.addEventListener('wheel', function(e) {
         e.preventDefault();
         const type = this.dataset.type;
         let val = parseInt(this.textContent);
-        const delta = e.deltaY < 0 ? 1 : -1; // scroll up = +1
-
-        if (type === 'hour') {
-          val = (val + delta + 24) % 24;
-        } else {
-          val = (val + delta + 60) % 60;
-        }
-
+        const delta = e.deltaY < 0 ? 1 : -1;
+        val = type === 'hour' ? (val + delta + 24) % 24 : (val + delta + 60) % 60;
         this.textContent = pad(val);
-
-        // Si une durée est sélectionnée, recalculer la fin
         applyDuration();
       }, { passive: false });
 
-      // Support tactile (swipe vertical sur mobile)
       let touchStartY = null;
       spinner.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; });
       spinner.addEventListener('touchmove', e => {
@@ -994,14 +1195,10 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
         if (touchStartY === null) return;
         const diff = touchStartY - e.touches[0].clientY;
         if (Math.abs(diff) < 10) return;
-
         const type = spinner.dataset.type;
         let val = parseInt(spinner.textContent);
         const delta = diff > 0 ? 1 : -1;
-
-        if (type === 'hour') val = (val + delta + 24) % 24;
-        else val = (val + delta + 60) % 60;
-
+        val = type === 'hour' ? (val + delta + 24) % 24 : (val + delta + 60) % 60;
         spinner.textContent = pad(val);
         touchStartY = e.touches[0].clientY;
         applyDuration();
@@ -1009,8 +1206,7 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
     }
 
     // =====================
-    // LIRE LA VALEUR D'UN BLOC DATETIME CUSTOM
-    // Retourne une string ISO "YYYY-MM-DDTHH:MM"
+    // LIRE / ÉCRIRE LES VALEURS DES CHAMPS CUSTOM
     // =====================
     function getDatetimeValue(timeContainerId, dateContainerId) {
       const h = document.getElementById(`${timeContainerId}-h`).textContent;
@@ -1021,10 +1217,6 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
       return `${y}-${mo}-${d}T${h}:${m}`;
     }
 
-    // =====================
-    // LIRE LA VALEUR D'UN BLOC DATE SEULE
-    // Retourne "YYYY-MM-DD" ou "" si vide
-    // =====================
     function getDateOnlyValue(containerId) {
       const dEl = document.getElementById(`${containerId}-d`);
       if (!dEl) return '';
@@ -1035,38 +1227,12 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
     }
 
     // =====================
-    // ÉCRIRE UNE VALEUR DANS UN BLOC DATETIME CUSTOM
-    // isoString : "YYYY-MM-DDTHH:MM"
-    // =====================
-    function setDatetimeValue(timeContainerId, dateContainerId, isoString) {
-      if (!isoString) return;
-      const dt = new Date(isoString);
-      document.getElementById(`${timeContainerId}-h`).textContent = pad(dt.getHours());
-      document.getElementById(`${timeContainerId}-m`).textContent = pad(dt.getMinutes());
-      document.getElementById(`${dateContainerId}-d`).value = dt.getDate();
-      document.getElementById(`${dateContainerId}-mo`).value = dt.getMonth() + 1;
-      document.getElementById(`${dateContainerId}-y`).value = dt.getFullYear();
-    }
-
-    // =====================
-    // ÉCRIRE UNE VALEUR DANS UN BLOC DATE SEULE
-    // =====================
-    function setDateOnlyValue(containerId, dateStr) {
-      if (!dateStr) return;
-      const parts = dateStr.split('-');
-      if (parts.length < 3) return;
-      document.getElementById(`${containerId}-d`).value = parseInt(parts[2]);
-      document.getElementById(`${containerId}-mo`).value = parseInt(parts[1]);
-      document.getElementById(`${containerId}-y`).value = parseInt(parts[0]);
-    }
-
-    // =====================
     // INITIALISATION
     // =====================
     document.addEventListener('DOMContentLoaded', function () {
       initTheme();
+      initCalendarView();
 
-      // Construire les blocs datetime custom à l'initialisation
       const now = new Date();
       buildDatetimeFields('start-time-spinners', 'start-date-selects', now);
       buildDatetimeFields('end-time-spinners', 'end-date-selects', new Date(now.getTime() + 3600000));
@@ -1077,18 +1243,39 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
       const calendarEl = document.getElementById('calendar');
       calendar = new FullCalendar.Calendar(calendarEl, {
         locale: 'fr',
-        titleFormat: { year: 'numeric', month: 'long' },        initialView: 'dayGridMonth',
+        initialView: localStorage.getItem('calendapp_view') || 'dayGridMonth',
         height: 'auto',
         headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+        titleFormat: { year: 'numeric', month: 'long' },
         dateClick: function(info) { openEventModal(info.dateStr); },
         eventClick: function(info) { openEditEventModal(info.event); },
         events: getCalendarEvents()
       });
 
       calendar.render();
+
+      // Marquer le bouton de vue active selon localStorage
+      const savedView = localStorage.getItem('calendapp_view') || 'dayGridMonth';
+      highlightViewBtn(savedView);
+
       renderColorGrid();
       renderTagList();
     });
+
+    // =====================
+    // INITIALISER LA VUE CALENDRIER DEPUIS LOCALSTORAGE
+    // =====================
+    function initCalendarView() {
+      const saved = localStorage.getItem('calendapp_view') || 'dayGridMonth';
+      highlightViewBtn(saved);
+    }
+
+    function highlightViewBtn(viewName) {
+      document.querySelectorAll('#view-selector button').forEach(b => b.classList.remove('active'));
+      const map = { dayGridMonth: 'btn-month', timeGridWeek: 'btn-week', timeGridDay: 'btn-day' };
+      const btn = document.getElementById(map[viewName]);
+      if (btn) btn.classList.add('active');
+    }
 
     // =====================
     // FORMAT FULLCALENDAR EVENTS
@@ -1124,13 +1311,12 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
     }
 
     // =====================
-    // CHANGER DE VUE
+    // CHANGER DE VUE (mémorisé dans localStorage)
     // =====================
     function changeView(viewName) {
       calendar.changeView(viewName);
-      document.querySelectorAll('#view-selector button').forEach(b => b.classList.remove('active'));
-      const map = { dayGridMonth: 'btn-month', timeGridWeek: 'btn-week', timeGridDay: 'btn-day' };
-      document.getElementById(map[viewName]).classList.add('active');
+      highlightViewBtn(viewName);
+      localStorage.setItem('calendapp_view', viewName);
     }
 
     // =====================
@@ -1146,7 +1332,7 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
 
     // =====================
     // OUVRIR LA MODALE ÉVÉNEMENT (création)
-    // dateStr : date pré-remplie si clic sur une case calendrier (format YYYY-MM-DD)
+    // dateStr : date pré-remplie si clic sur une case calendrier
     // =====================
     function openEventModal(dateStr) {
       editingEventId = null;
@@ -1158,11 +1344,9 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
       document.getElementById('btn-delete-event').style.display = 'none';
       selectedTagId = null;
 
-      // Par défaut : créneau horaire
       setEventType('timed');
       toggleRecurrenceEnd();
 
-      // Pré-remplir avec la date cliquée ou maintenant
       const baseDate = dateStr ? new Date(dateStr + 'T00:00:00') : new Date();
       const endDate = new Date(baseDate.getTime() + 3600000);
 
@@ -1197,20 +1381,14 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
       toggleRecurrenceEnd();
 
       if (!ev.allDay) {
-        // Reconstruire les spinners avec les valeurs de l'événement
-        const startDate = new Date(ev.start);
-        const endDate = ev.end ? new Date(ev.end) : new Date(startDate.getTime() + 3600000);
-        buildDatetimeFields('start-time-spinners', 'start-date-selects', startDate);
-        buildDatetimeFields('end-time-spinners', 'end-date-selects', endDate);
+        buildDatetimeFields('start-time-spinners', 'start-date-selects', new Date(ev.start));
+        buildDatetimeFields('end-time-spinners', 'end-date-selects', ev.end ? new Date(ev.end) : new Date(new Date(ev.start).getTime() + 3600000));
       } else {
-        const startDate = new Date(ev.start + 'T00:00:00');
-        buildDateOnlyFields('allday-start-selects', startDate);
+        buildDateOnlyFields('allday-start-selects', new Date(ev.start + 'T00:00:00'));
         if (ev.end) buildDateOnlyFields('allday-end-selects', new Date(ev.end + 'T00:00:00'));
       }
 
-      if (ev.recurrenceEnd) {
-        buildDateOnlyFields('recurrence-end-selects', new Date(ev.recurrenceEnd + 'T00:00:00'));
-      }
+      if (ev.recurrenceEnd) buildDateOnlyFields('recurrence-end-selects', new Date(ev.recurrenceEnd + 'T00:00:00'));
 
       document.getElementById('reminders-list').innerHTML = '';
       (ev.reminders || []).forEach(r => addReminderRow(r.value, r.unit));
@@ -1224,27 +1402,21 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
       document.getElementById('overlay-event').classList.remove('active');
     }
 
-    // =====================
-    // FIN DE RÉCURRENCE
-    // =====================
     function toggleRecurrenceEnd() {
       const rec = document.getElementById('event-recurrence').value;
       document.getElementById('recurrence-end-field').style.display = rec !== 'none' ? 'block' : 'none';
     }
 
     // =====================
-    // CALCUL AUTOMATIQUE DE LA FIN SELON DURÉE + DÉBUT
+    // CALCUL AUTOMATIQUE FIN = DÉBUT + DURÉE
     // =====================
     function applyDuration() {
       const durationMin = parseInt(document.getElementById('event-duration').value);
       if (!durationMin) return;
-
       const startIso = getDatetimeValue('start-time-spinners', 'start-date-selects');
       const startMs = new Date(startIso).getTime();
       if (isNaN(startMs)) return;
-
-      const endDate = new Date(startMs + durationMin * 60000);
-      buildDatetimeFields('end-time-spinners', 'end-date-selects', endDate);
+      buildDatetimeFields('end-time-spinners', 'end-date-selects', new Date(startMs + durationMin * 60000));
     }
 
     // =====================
@@ -1278,8 +1450,7 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
         id: editingEventId || Date.now().toString(),
         title,
         description: document.getElementById('event-description').value.trim(),
-        start,
-        end,
+        start, end,
         allDay: isAllDay,
         recurrence: document.getElementById('event-recurrence').value,
         recurrenceEnd: getDateOnlyValue('recurrence-end-selects') || null,
@@ -1352,7 +1523,7 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
     }
 
     // =====================
-    // RAPPELS (valeur par défaut : 10 minutes)
+    // RAPPELS (défaut : 10 minutes)
     // =====================
     function addReminderRow(value = 10, unit = 'minutes') {
       const row = document.createElement('div');
@@ -1415,33 +1586,121 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
     }
 
     // =====================
+    // BURGER MENU
+    // =====================
+    function openBurger() {
+      document.getElementById('burger-menu').classList.add('open');
+      document.getElementById('burger-overlay').classList.add('active');
+    }
+
+    function closeBurger() {
+      document.getElementById('burger-menu').classList.remove('open');
+      document.getElementById('burger-overlay').classList.remove('active');
+    }
+
+    // =====================
+    // AUTH DEPUIS LE BURGER
+    // Bascule entre connexion et déconnexion
+    // =====================
+    function burgerAuthAction() {
+      if (googleAccessToken) {
+        logoutUser();
+      } else {
+        closeBurger();
+        loginWithGoogle();
+      }
+    }
+
+    // Met à jour le label et l'icône du bouton auth dans le burger
+    function updateBurgerAuthLabel() {
+      document.getElementById('burger-auth-label').textContent = googleAccessToken ? 'Se déconnecter' : 'Se connecter';
+      document.getElementById('burger-auth-icon').textContent = googleAccessToken ? '🚪' : '🔑';
+    }
+
+    // =====================
+    // LOGOUT
+    // Vide la page : seuls le header et le CTA de reconnexion restent
+    // =====================
+    function logoutUser() {
+      googleAccessToken = null;
+
+      // Supprimer uniquement les events Google du stockage local
+      events = events.filter(e => !e.fromGoogle);
+      localStorage.setItem('calendapp_events', JSON.stringify(events));
+
+      // Masquer la vue principale et le bouton +
+      document.getElementById('main-view').style.display = 'none';
+      document.getElementById('btn-add-event').style.display = 'none';
+      document.getElementById('disconnected-screen').style.display = 'flex';
+
+      // Réinitialiser l'affichage de connexion dans la topbar desktop
+      document.getElementById('btn-login').style.display = 'inline-block';
+      document.getElementById('user-info').style.display = 'none';
+      document.getElementById('user-info').textContent = '';
+
+      updateBurgerAuthLabel();
+      closeBurger();
+    }
+
+    // =====================
+    // PAGE ROUTINES (placeholder)
+    // =====================
+    function openRoutines() {
+      closeBurger();
+      document.getElementById('main-view').style.display = 'none';
+      document.getElementById('btn-add-event').style.display = 'none';
+      document.getElementById('routines-page').style.display = 'flex';
+    }
+
+    function closeRoutines() {
+      document.getElementById('routines-page').style.display = 'none';
+      document.getElementById('main-view').style.display = 'block';
+      document.getElementById('btn-add-event').style.display = 'flex';
+    }
+
+    // =====================
     // THÈME (clair / sombre / auto) — mémorisé dans localStorage
     // =====================
     function initTheme() {
       const saved = localStorage.getItem('calendapp_theme') || 'auto';
+
       if (saved === 'auto') {
         document.getElementById('check-auto-theme').checked = true;
         document.getElementById('toggle-dark').disabled = true;
+        document.getElementById('burger-check-auto-theme').checked = true;
+        document.getElementById('burger-toggle-dark').disabled = true;
         applySystemTheme();
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applySystemTheme);
       } else {
-        document.getElementById('check-auto-theme').checked = false;
-        document.getElementById('toggle-dark').disabled = false;
         const isDark = saved === 'dark';
-        applyTheme(isDark);
         document.getElementById('toggle-dark').checked = isDark;
+        document.getElementById('burger-toggle-dark').checked = isDark;
+        applyTheme(isDark);
       }
     }
 
+    // Toggle desktop
     function onThemeToggle() {
       const isDark = document.getElementById('toggle-dark').checked;
+      document.getElementById('burger-toggle-dark').checked = isDark;
       applyTheme(isDark);
       localStorage.setItem('calendapp_theme', isDark ? 'dark' : 'light');
     }
 
+    // Toggle burger
+    function onBurgerThemeToggle() {
+      const isDark = document.getElementById('burger-toggle-dark').checked;
+      document.getElementById('toggle-dark').checked = isDark;
+      applyTheme(isDark);
+      localStorage.setItem('calendapp_theme', isDark ? 'dark' : 'light');
+    }
+
+    // Coche Auto desktop
     function onAutoThemeChange() {
       const isAuto = document.getElementById('check-auto-theme').checked;
+      document.getElementById('burger-check-auto-theme').checked = isAuto;
       document.getElementById('toggle-dark').disabled = isAuto;
+      document.getElementById('burger-toggle-dark').disabled = isAuto;
       if (isAuto) {
         localStorage.setItem('calendapp_theme', 'auto');
         applySystemTheme();
@@ -1453,15 +1712,26 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
       }
     }
 
+    // Coche Auto burger
+    function onBurgerAutoThemeChange() {
+      const isAuto = document.getElementById('burger-check-auto-theme').checked;
+      document.getElementById('check-auto-theme').checked = isAuto;
+      document.getElementById('toggle-dark').disabled = isAuto;
+      document.getElementById('burger-toggle-dark').disabled = isAuto;
+      onAutoThemeChange();
+    }
+
     function applySystemTheme() {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       applyTheme(prefersDark);
       document.getElementById('toggle-dark').checked = prefersDark;
+      document.getElementById('burger-toggle-dark').checked = prefersDark;
     }
 
     function applyTheme(dark) {
       document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
       document.getElementById('theme-icon').textContent = dark ? '🌙' : '☀️';
+      document.getElementById('burger-theme-icon').textContent = dark ? '🌙' : '☀️';
     }
 
     // =====================
@@ -1514,15 +1784,27 @@ const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov
       .catch(err => console.error('Erreur Google Calendar:', err));
     }
 
+    // =====================
+    // AFFICHER L'UTILISATEUR CONNECTÉ
+    // Bascule vers la vue principale
+    // =====================
     function fetchUserInfo() {
       fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${googleAccessToken}` }
       })
       .then(res => res.json())
       .then(data => {
+        // Topbar desktop
         document.getElementById('btn-login').style.display = 'none';
         document.getElementById('user-info').style.display = 'inline';
         document.getElementById('user-info').textContent = `👤 ${data.given_name || data.email}`;
+
+        // Afficher la vue principale, masquer l'écran de déconnexion
+        document.getElementById('disconnected-screen').style.display = 'none';
+        document.getElementById('main-view').style.display = 'block';
+        document.getElementById('btn-add-event').style.display = 'flex';
+
+        updateBurgerAuthLabel();
       });
     }
 
